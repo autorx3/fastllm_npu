@@ -244,8 +244,13 @@ namespace fastllm {
         aclTensor *tInput = CreateAclTensor(input, dimInput);
         aclTensor *tWeight = CreateAclTensor(weight, dimWeight);
         aclTensor *tWeightScale = CreateAclTensor(weightScale, dimWScale);
-        aclTensor *tXScale = CreateAclTensor(xScale, dimXScale);
+        //aclTensor *tXScale = CreateAclTensor(xScale, dimXScale);
         aclTensor *tOutput = CreateAclTensor(output, dimOutput);
+
+        aclTensor *tXScale = nullptr;
+        if (xScale.dims.size() > 0 && xScale.deviceData != nullptr) {
+            tXScale = CreateAclTensor(xScale, dimXScale);
+        }
         
         aclTensor *tBias = nullptr;
         if (bias.dims.size() > 0 && bias.deviceData != nullptr) {
@@ -309,6 +314,7 @@ namespace fastllm {
         aclrtSynchronizeStream(GetFastllmAclStream()); 
         aclrtFree(rstdPtr);
     }
+
 
     void FastllmAclSilu(const Data &input, Data &output) {
         aclTensor *tInput = CreateAclTensor(input, input.dims);
