@@ -117,24 +117,24 @@ depend:
 .PHONY : depend
 
 #=============================================================================
-# Target rules for targets named test_npu_swiglu_softmax
+# Target rules for targets named test_npu
 
 # Build rule for target.
-test_npu_swiglu_softmax: cmake_check_build_system
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 test_npu_swiglu_softmax
-.PHONY : test_npu_swiglu_softmax
+test_npu: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 test_npu
+.PHONY : test_npu
 
 # fast build rule for target.
-test_npu_swiglu_softmax/fast:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_npu_swiglu_softmax.dir/build.make CMakeFiles/test_npu_swiglu_softmax.dir/build
-.PHONY : test_npu_swiglu_softmax/fast
+test_npu/fast:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_npu.dir/build.make CMakeFiles/test_npu.dir/build
+.PHONY : test_npu/fast
 
 home/HwHiAiUser/fastllm-master/src/device.o: home/HwHiAiUser/fastllm-master/src/device.cpp.o
 .PHONY : home/HwHiAiUser/fastllm-master/src/device.o
 
 # target to build an object file
 home/HwHiAiUser/fastllm-master/src/device.cpp.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_npu_swiglu_softmax.dir/build.make CMakeFiles/test_npu_swiglu_softmax.dir/home/HwHiAiUser/fastllm-master/src/device.cpp.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_npu.dir/build.make CMakeFiles/test_npu.dir/home/HwHiAiUser/fastllm-master/src/device.cpp.o
 .PHONY : home/HwHiAiUser/fastllm-master/src/device.cpp.o
 
 home/HwHiAiUser/fastllm-master/src/device.i: home/HwHiAiUser/fastllm-master/src/device.cpp.i
@@ -142,7 +142,7 @@ home/HwHiAiUser/fastllm-master/src/device.i: home/HwHiAiUser/fastllm-master/src/
 
 # target to preprocess a source file
 home/HwHiAiUser/fastllm-master/src/device.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_npu_swiglu_softmax.dir/build.make CMakeFiles/test_npu_swiglu_softmax.dir/home/HwHiAiUser/fastllm-master/src/device.cpp.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_npu.dir/build.make CMakeFiles/test_npu.dir/home/HwHiAiUser/fastllm-master/src/device.cpp.i
 .PHONY : home/HwHiAiUser/fastllm-master/src/device.cpp.i
 
 home/HwHiAiUser/fastllm-master/src/device.s: home/HwHiAiUser/fastllm-master/src/device.cpp.s
@@ -150,7 +150,7 @@ home/HwHiAiUser/fastllm-master/src/device.s: home/HwHiAiUser/fastllm-master/src/
 
 # target to generate assembly for a file
 home/HwHiAiUser/fastllm-master/src/device.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_npu_swiglu_softmax.dir/build.make CMakeFiles/test_npu_swiglu_softmax.dir/home/HwHiAiUser/fastllm-master/src/device.cpp.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_npu.dir/build.make CMakeFiles/test_npu.dir/home/HwHiAiUser/fastllm-master/src/device.cpp.s
 .PHONY : home/HwHiAiUser/fastllm-master/src/device.cpp.s
 
 home/HwHiAiUser/fastllm-master/src/devices/cpu/amx.o: home/HwHiAiUser/fastllm-master/src/devices/cpu/amx.cpp.o
@@ -158,7 +158,7 @@ home/HwHiAiUser/fastllm-master/src/devices/cpu/amx.o: home/HwHiAiUser/fastllm-ma
 
 # target to build an object file
 home/HwHiAiUser/fastllm-master/src/devices/cpu/amx.cpp.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_npu_swiglu_softmax.dir/build.make CMakeFiles/test_npu_swiglu_softmax.dir/home/HwHiAiUser/fastllm-master/src/devices/cpu/amx.cpp.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_npu.dir/build.make CMakeFiles/test_npu.dir/home/HwHiAiUser/fastllm-master/src/devices/cpu/amx.cpp.o
 .PHONY : home/HwHiAiUser/fastllm-master/src/devices/cpu/amx.cpp.o
 
 home/HwHiAiUser/fastllm-master/src/devices/cpu/amx.i: home/HwHiAiUser/fastllm-master/src/devices/cpu/amx.cpp.i
@@ -166,7 +166,7 @@ home/HwHiAiUser/fastllm-master/src/devices/cpu/amx.i: home/HwHiAiUser/fastllm-ma
 
 # target to preprocess a source file
 home/HwHiAiUser/fastllm-master/src/devices/cpu/amx.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_npu_swiglu_softmax.dir/build.make CMakeFiles/test_npu_swiglu_softmax.dir/home/HwHiAiUser/fastllm-master/src/devices/cpu/amx.cpp.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_npu.dir/build.make CMakeFiles/test_npu.dir/home/HwHiAiUser/fastllm-master/src/devices/cpu/amx.cpp.i
 .PHONY : home/HwHiAiUser/fastllm-master/src/devices/cpu/amx.cpp.i
 
 home/HwHiAiUser/fastllm-master/src/devices/cpu/amx.s: home/HwHiAiUser/fastllm-master/src/devices/cpu/amx.cpp.s
@@ -174,7 +174,7 @@ home/HwHiAiUser/fastllm-master/src/devices/cpu/amx.s: home/HwHiAiUser/fastllm-ma
 
 # target to generate assembly for a file
 home/HwHiAiUser/fastllm-master/src/devices/cpu/amx.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_npu_swiglu_softmax.dir/build.make CMakeFiles/test_npu_swiglu_softmax.dir/home/HwHiAiUser/fastllm-master/src/devices/cpu/amx.cpp.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_npu.dir/build.make CMakeFiles/test_npu.dir/home/HwHiAiUser/fastllm-master/src/devices/cpu/amx.cpp.s
 .PHONY : home/HwHiAiUser/fastllm-master/src/devices/cpu/amx.cpp.s
 
 home/HwHiAiUser/fastllm-master/src/devices/cpu/avx2.o: home/HwHiAiUser/fastllm-master/src/devices/cpu/avx2.cpp.o
@@ -182,7 +182,7 @@ home/HwHiAiUser/fastllm-master/src/devices/cpu/avx2.o: home/HwHiAiUser/fastllm-m
 
 # target to build an object file
 home/HwHiAiUser/fastllm-master/src/devices/cpu/avx2.cpp.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_npu_swiglu_softmax.dir/build.make CMakeFiles/test_npu_swiglu_softmax.dir/home/HwHiAiUser/fastllm-master/src/devices/cpu/avx2.cpp.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_npu.dir/build.make CMakeFiles/test_npu.dir/home/HwHiAiUser/fastllm-master/src/devices/cpu/avx2.cpp.o
 .PHONY : home/HwHiAiUser/fastllm-master/src/devices/cpu/avx2.cpp.o
 
 home/HwHiAiUser/fastllm-master/src/devices/cpu/avx2.i: home/HwHiAiUser/fastllm-master/src/devices/cpu/avx2.cpp.i
@@ -190,7 +190,7 @@ home/HwHiAiUser/fastllm-master/src/devices/cpu/avx2.i: home/HwHiAiUser/fastllm-m
 
 # target to preprocess a source file
 home/HwHiAiUser/fastllm-master/src/devices/cpu/avx2.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_npu_swiglu_softmax.dir/build.make CMakeFiles/test_npu_swiglu_softmax.dir/home/HwHiAiUser/fastllm-master/src/devices/cpu/avx2.cpp.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_npu.dir/build.make CMakeFiles/test_npu.dir/home/HwHiAiUser/fastllm-master/src/devices/cpu/avx2.cpp.i
 .PHONY : home/HwHiAiUser/fastllm-master/src/devices/cpu/avx2.cpp.i
 
 home/HwHiAiUser/fastllm-master/src/devices/cpu/avx2.s: home/HwHiAiUser/fastllm-master/src/devices/cpu/avx2.cpp.s
@@ -198,7 +198,7 @@ home/HwHiAiUser/fastllm-master/src/devices/cpu/avx2.s: home/HwHiAiUser/fastllm-m
 
 # target to generate assembly for a file
 home/HwHiAiUser/fastllm-master/src/devices/cpu/avx2.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_npu_swiglu_softmax.dir/build.make CMakeFiles/test_npu_swiglu_softmax.dir/home/HwHiAiUser/fastllm-master/src/devices/cpu/avx2.cpp.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_npu.dir/build.make CMakeFiles/test_npu.dir/home/HwHiAiUser/fastllm-master/src/devices/cpu/avx2.cpp.s
 .PHONY : home/HwHiAiUser/fastllm-master/src/devices/cpu/avx2.cpp.s
 
 home/HwHiAiUser/fastllm-master/src/devices/cpu/avx512bf16.o: home/HwHiAiUser/fastllm-master/src/devices/cpu/avx512bf16.cpp.o
@@ -206,7 +206,7 @@ home/HwHiAiUser/fastllm-master/src/devices/cpu/avx512bf16.o: home/HwHiAiUser/fas
 
 # target to build an object file
 home/HwHiAiUser/fastllm-master/src/devices/cpu/avx512bf16.cpp.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_npu_swiglu_softmax.dir/build.make CMakeFiles/test_npu_swiglu_softmax.dir/home/HwHiAiUser/fastllm-master/src/devices/cpu/avx512bf16.cpp.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_npu.dir/build.make CMakeFiles/test_npu.dir/home/HwHiAiUser/fastllm-master/src/devices/cpu/avx512bf16.cpp.o
 .PHONY : home/HwHiAiUser/fastllm-master/src/devices/cpu/avx512bf16.cpp.o
 
 home/HwHiAiUser/fastllm-master/src/devices/cpu/avx512bf16.i: home/HwHiAiUser/fastllm-master/src/devices/cpu/avx512bf16.cpp.i
@@ -214,7 +214,7 @@ home/HwHiAiUser/fastllm-master/src/devices/cpu/avx512bf16.i: home/HwHiAiUser/fas
 
 # target to preprocess a source file
 home/HwHiAiUser/fastllm-master/src/devices/cpu/avx512bf16.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_npu_swiglu_softmax.dir/build.make CMakeFiles/test_npu_swiglu_softmax.dir/home/HwHiAiUser/fastllm-master/src/devices/cpu/avx512bf16.cpp.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_npu.dir/build.make CMakeFiles/test_npu.dir/home/HwHiAiUser/fastllm-master/src/devices/cpu/avx512bf16.cpp.i
 .PHONY : home/HwHiAiUser/fastllm-master/src/devices/cpu/avx512bf16.cpp.i
 
 home/HwHiAiUser/fastllm-master/src/devices/cpu/avx512bf16.s: home/HwHiAiUser/fastllm-master/src/devices/cpu/avx512bf16.cpp.s
@@ -222,7 +222,7 @@ home/HwHiAiUser/fastllm-master/src/devices/cpu/avx512bf16.s: home/HwHiAiUser/fas
 
 # target to generate assembly for a file
 home/HwHiAiUser/fastllm-master/src/devices/cpu/avx512bf16.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_npu_swiglu_softmax.dir/build.make CMakeFiles/test_npu_swiglu_softmax.dir/home/HwHiAiUser/fastllm-master/src/devices/cpu/avx512bf16.cpp.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_npu.dir/build.make CMakeFiles/test_npu.dir/home/HwHiAiUser/fastllm-master/src/devices/cpu/avx512bf16.cpp.s
 .PHONY : home/HwHiAiUser/fastllm-master/src/devices/cpu/avx512bf16.cpp.s
 
 home/HwHiAiUser/fastllm-master/src/devices/cpu/avx512f.o: home/HwHiAiUser/fastllm-master/src/devices/cpu/avx512f.cpp.o
@@ -230,7 +230,7 @@ home/HwHiAiUser/fastllm-master/src/devices/cpu/avx512f.o: home/HwHiAiUser/fastll
 
 # target to build an object file
 home/HwHiAiUser/fastllm-master/src/devices/cpu/avx512f.cpp.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_npu_swiglu_softmax.dir/build.make CMakeFiles/test_npu_swiglu_softmax.dir/home/HwHiAiUser/fastllm-master/src/devices/cpu/avx512f.cpp.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_npu.dir/build.make CMakeFiles/test_npu.dir/home/HwHiAiUser/fastllm-master/src/devices/cpu/avx512f.cpp.o
 .PHONY : home/HwHiAiUser/fastllm-master/src/devices/cpu/avx512f.cpp.o
 
 home/HwHiAiUser/fastllm-master/src/devices/cpu/avx512f.i: home/HwHiAiUser/fastllm-master/src/devices/cpu/avx512f.cpp.i
@@ -238,7 +238,7 @@ home/HwHiAiUser/fastllm-master/src/devices/cpu/avx512f.i: home/HwHiAiUser/fastll
 
 # target to preprocess a source file
 home/HwHiAiUser/fastllm-master/src/devices/cpu/avx512f.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_npu_swiglu_softmax.dir/build.make CMakeFiles/test_npu_swiglu_softmax.dir/home/HwHiAiUser/fastllm-master/src/devices/cpu/avx512f.cpp.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_npu.dir/build.make CMakeFiles/test_npu.dir/home/HwHiAiUser/fastllm-master/src/devices/cpu/avx512f.cpp.i
 .PHONY : home/HwHiAiUser/fastllm-master/src/devices/cpu/avx512f.cpp.i
 
 home/HwHiAiUser/fastllm-master/src/devices/cpu/avx512f.s: home/HwHiAiUser/fastllm-master/src/devices/cpu/avx512f.cpp.s
@@ -246,7 +246,7 @@ home/HwHiAiUser/fastllm-master/src/devices/cpu/avx512f.s: home/HwHiAiUser/fastll
 
 # target to generate assembly for a file
 home/HwHiAiUser/fastllm-master/src/devices/cpu/avx512f.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_npu_swiglu_softmax.dir/build.make CMakeFiles/test_npu_swiglu_softmax.dir/home/HwHiAiUser/fastllm-master/src/devices/cpu/avx512f.cpp.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_npu.dir/build.make CMakeFiles/test_npu.dir/home/HwHiAiUser/fastllm-master/src/devices/cpu/avx512f.cpp.s
 .PHONY : home/HwHiAiUser/fastllm-master/src/devices/cpu/avx512f.cpp.s
 
 home/HwHiAiUser/fastllm-master/src/devices/cpu/avx512vnni.o: home/HwHiAiUser/fastllm-master/src/devices/cpu/avx512vnni.cpp.o
@@ -254,7 +254,7 @@ home/HwHiAiUser/fastllm-master/src/devices/cpu/avx512vnni.o: home/HwHiAiUser/fas
 
 # target to build an object file
 home/HwHiAiUser/fastllm-master/src/devices/cpu/avx512vnni.cpp.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_npu_swiglu_softmax.dir/build.make CMakeFiles/test_npu_swiglu_softmax.dir/home/HwHiAiUser/fastllm-master/src/devices/cpu/avx512vnni.cpp.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_npu.dir/build.make CMakeFiles/test_npu.dir/home/HwHiAiUser/fastllm-master/src/devices/cpu/avx512vnni.cpp.o
 .PHONY : home/HwHiAiUser/fastllm-master/src/devices/cpu/avx512vnni.cpp.o
 
 home/HwHiAiUser/fastllm-master/src/devices/cpu/avx512vnni.i: home/HwHiAiUser/fastllm-master/src/devices/cpu/avx512vnni.cpp.i
@@ -262,7 +262,7 @@ home/HwHiAiUser/fastllm-master/src/devices/cpu/avx512vnni.i: home/HwHiAiUser/fas
 
 # target to preprocess a source file
 home/HwHiAiUser/fastllm-master/src/devices/cpu/avx512vnni.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_npu_swiglu_softmax.dir/build.make CMakeFiles/test_npu_swiglu_softmax.dir/home/HwHiAiUser/fastllm-master/src/devices/cpu/avx512vnni.cpp.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_npu.dir/build.make CMakeFiles/test_npu.dir/home/HwHiAiUser/fastllm-master/src/devices/cpu/avx512vnni.cpp.i
 .PHONY : home/HwHiAiUser/fastllm-master/src/devices/cpu/avx512vnni.cpp.i
 
 home/HwHiAiUser/fastllm-master/src/devices/cpu/avx512vnni.s: home/HwHiAiUser/fastllm-master/src/devices/cpu/avx512vnni.cpp.s
@@ -270,7 +270,7 @@ home/HwHiAiUser/fastllm-master/src/devices/cpu/avx512vnni.s: home/HwHiAiUser/fas
 
 # target to generate assembly for a file
 home/HwHiAiUser/fastllm-master/src/devices/cpu/avx512vnni.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_npu_swiglu_softmax.dir/build.make CMakeFiles/test_npu_swiglu_softmax.dir/home/HwHiAiUser/fastllm-master/src/devices/cpu/avx512vnni.cpp.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_npu.dir/build.make CMakeFiles/test_npu.dir/home/HwHiAiUser/fastllm-master/src/devices/cpu/avx512vnni.cpp.s
 .PHONY : home/HwHiAiUser/fastllm-master/src/devices/cpu/avx512vnni.cpp.s
 
 home/HwHiAiUser/fastllm-master/src/devices/cpu/cpudevice.o: home/HwHiAiUser/fastllm-master/src/devices/cpu/cpudevice.cpp.o
@@ -278,7 +278,7 @@ home/HwHiAiUser/fastllm-master/src/devices/cpu/cpudevice.o: home/HwHiAiUser/fast
 
 # target to build an object file
 home/HwHiAiUser/fastllm-master/src/devices/cpu/cpudevice.cpp.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_npu_swiglu_softmax.dir/build.make CMakeFiles/test_npu_swiglu_softmax.dir/home/HwHiAiUser/fastllm-master/src/devices/cpu/cpudevice.cpp.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_npu.dir/build.make CMakeFiles/test_npu.dir/home/HwHiAiUser/fastllm-master/src/devices/cpu/cpudevice.cpp.o
 .PHONY : home/HwHiAiUser/fastllm-master/src/devices/cpu/cpudevice.cpp.o
 
 home/HwHiAiUser/fastllm-master/src/devices/cpu/cpudevice.i: home/HwHiAiUser/fastllm-master/src/devices/cpu/cpudevice.cpp.i
@@ -286,7 +286,7 @@ home/HwHiAiUser/fastllm-master/src/devices/cpu/cpudevice.i: home/HwHiAiUser/fast
 
 # target to preprocess a source file
 home/HwHiAiUser/fastllm-master/src/devices/cpu/cpudevice.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_npu_swiglu_softmax.dir/build.make CMakeFiles/test_npu_swiglu_softmax.dir/home/HwHiAiUser/fastllm-master/src/devices/cpu/cpudevice.cpp.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_npu.dir/build.make CMakeFiles/test_npu.dir/home/HwHiAiUser/fastllm-master/src/devices/cpu/cpudevice.cpp.i
 .PHONY : home/HwHiAiUser/fastllm-master/src/devices/cpu/cpudevice.cpp.i
 
 home/HwHiAiUser/fastllm-master/src/devices/cpu/cpudevice.s: home/HwHiAiUser/fastllm-master/src/devices/cpu/cpudevice.cpp.s
@@ -294,7 +294,7 @@ home/HwHiAiUser/fastllm-master/src/devices/cpu/cpudevice.s: home/HwHiAiUser/fast
 
 # target to generate assembly for a file
 home/HwHiAiUser/fastllm-master/src/devices/cpu/cpudevice.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_npu_swiglu_softmax.dir/build.make CMakeFiles/test_npu_swiglu_softmax.dir/home/HwHiAiUser/fastllm-master/src/devices/cpu/cpudevice.cpp.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_npu.dir/build.make CMakeFiles/test_npu.dir/home/HwHiAiUser/fastllm-master/src/devices/cpu/cpudevice.cpp.s
 .PHONY : home/HwHiAiUser/fastllm-master/src/devices/cpu/cpudevice.cpp.s
 
 home/HwHiAiUser/fastllm-master/src/devices/cpu/cpudevicebatch.o: home/HwHiAiUser/fastllm-master/src/devices/cpu/cpudevicebatch.cpp.o
@@ -302,7 +302,7 @@ home/HwHiAiUser/fastllm-master/src/devices/cpu/cpudevicebatch.o: home/HwHiAiUser
 
 # target to build an object file
 home/HwHiAiUser/fastllm-master/src/devices/cpu/cpudevicebatch.cpp.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_npu_swiglu_softmax.dir/build.make CMakeFiles/test_npu_swiglu_softmax.dir/home/HwHiAiUser/fastllm-master/src/devices/cpu/cpudevicebatch.cpp.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_npu.dir/build.make CMakeFiles/test_npu.dir/home/HwHiAiUser/fastllm-master/src/devices/cpu/cpudevicebatch.cpp.o
 .PHONY : home/HwHiAiUser/fastllm-master/src/devices/cpu/cpudevicebatch.cpp.o
 
 home/HwHiAiUser/fastllm-master/src/devices/cpu/cpudevicebatch.i: home/HwHiAiUser/fastllm-master/src/devices/cpu/cpudevicebatch.cpp.i
@@ -310,7 +310,7 @@ home/HwHiAiUser/fastllm-master/src/devices/cpu/cpudevicebatch.i: home/HwHiAiUser
 
 # target to preprocess a source file
 home/HwHiAiUser/fastllm-master/src/devices/cpu/cpudevicebatch.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_npu_swiglu_softmax.dir/build.make CMakeFiles/test_npu_swiglu_softmax.dir/home/HwHiAiUser/fastllm-master/src/devices/cpu/cpudevicebatch.cpp.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_npu.dir/build.make CMakeFiles/test_npu.dir/home/HwHiAiUser/fastllm-master/src/devices/cpu/cpudevicebatch.cpp.i
 .PHONY : home/HwHiAiUser/fastllm-master/src/devices/cpu/cpudevicebatch.cpp.i
 
 home/HwHiAiUser/fastllm-master/src/devices/cpu/cpudevicebatch.s: home/HwHiAiUser/fastllm-master/src/devices/cpu/cpudevicebatch.cpp.s
@@ -318,7 +318,7 @@ home/HwHiAiUser/fastllm-master/src/devices/cpu/cpudevicebatch.s: home/HwHiAiUser
 
 # target to generate assembly for a file
 home/HwHiAiUser/fastllm-master/src/devices/cpu/cpudevicebatch.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_npu_swiglu_softmax.dir/build.make CMakeFiles/test_npu_swiglu_softmax.dir/home/HwHiAiUser/fastllm-master/src/devices/cpu/cpudevicebatch.cpp.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_npu.dir/build.make CMakeFiles/test_npu.dir/home/HwHiAiUser/fastllm-master/src/devices/cpu/cpudevicebatch.cpp.s
 .PHONY : home/HwHiAiUser/fastllm-master/src/devices/cpu/cpudevicebatch.cpp.s
 
 home/HwHiAiUser/fastllm-master/src/devices/cpu/linear.o: home/HwHiAiUser/fastllm-master/src/devices/cpu/linear.cpp.o
@@ -326,7 +326,7 @@ home/HwHiAiUser/fastllm-master/src/devices/cpu/linear.o: home/HwHiAiUser/fastllm
 
 # target to build an object file
 home/HwHiAiUser/fastllm-master/src/devices/cpu/linear.cpp.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_npu_swiglu_softmax.dir/build.make CMakeFiles/test_npu_swiglu_softmax.dir/home/HwHiAiUser/fastllm-master/src/devices/cpu/linear.cpp.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_npu.dir/build.make CMakeFiles/test_npu.dir/home/HwHiAiUser/fastllm-master/src/devices/cpu/linear.cpp.o
 .PHONY : home/HwHiAiUser/fastllm-master/src/devices/cpu/linear.cpp.o
 
 home/HwHiAiUser/fastllm-master/src/devices/cpu/linear.i: home/HwHiAiUser/fastllm-master/src/devices/cpu/linear.cpp.i
@@ -334,7 +334,7 @@ home/HwHiAiUser/fastllm-master/src/devices/cpu/linear.i: home/HwHiAiUser/fastllm
 
 # target to preprocess a source file
 home/HwHiAiUser/fastllm-master/src/devices/cpu/linear.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_npu_swiglu_softmax.dir/build.make CMakeFiles/test_npu_swiglu_softmax.dir/home/HwHiAiUser/fastllm-master/src/devices/cpu/linear.cpp.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_npu.dir/build.make CMakeFiles/test_npu.dir/home/HwHiAiUser/fastllm-master/src/devices/cpu/linear.cpp.i
 .PHONY : home/HwHiAiUser/fastllm-master/src/devices/cpu/linear.cpp.i
 
 home/HwHiAiUser/fastllm-master/src/devices/cpu/linear.s: home/HwHiAiUser/fastllm-master/src/devices/cpu/linear.cpp.s
@@ -342,7 +342,7 @@ home/HwHiAiUser/fastllm-master/src/devices/cpu/linear.s: home/HwHiAiUser/fastllm
 
 # target to generate assembly for a file
 home/HwHiAiUser/fastllm-master/src/devices/cpu/linear.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_npu_swiglu_softmax.dir/build.make CMakeFiles/test_npu_swiglu_softmax.dir/home/HwHiAiUser/fastllm-master/src/devices/cpu/linear.cpp.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_npu.dir/build.make CMakeFiles/test_npu.dir/home/HwHiAiUser/fastllm-master/src/devices/cpu/linear.cpp.s
 .PHONY : home/HwHiAiUser/fastllm-master/src/devices/cpu/linear.cpp.s
 
 home/HwHiAiUser/fastllm-master/src/devices/npu/ascenddevice.o: home/HwHiAiUser/fastllm-master/src/devices/npu/ascenddevice.cpp.o
@@ -350,7 +350,7 @@ home/HwHiAiUser/fastllm-master/src/devices/npu/ascenddevice.o: home/HwHiAiUser/f
 
 # target to build an object file
 home/HwHiAiUser/fastllm-master/src/devices/npu/ascenddevice.cpp.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_npu_swiglu_softmax.dir/build.make CMakeFiles/test_npu_swiglu_softmax.dir/home/HwHiAiUser/fastllm-master/src/devices/npu/ascenddevice.cpp.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_npu.dir/build.make CMakeFiles/test_npu.dir/home/HwHiAiUser/fastllm-master/src/devices/npu/ascenddevice.cpp.o
 .PHONY : home/HwHiAiUser/fastllm-master/src/devices/npu/ascenddevice.cpp.o
 
 home/HwHiAiUser/fastllm-master/src/devices/npu/ascenddevice.i: home/HwHiAiUser/fastllm-master/src/devices/npu/ascenddevice.cpp.i
@@ -358,7 +358,7 @@ home/HwHiAiUser/fastllm-master/src/devices/npu/ascenddevice.i: home/HwHiAiUser/f
 
 # target to preprocess a source file
 home/HwHiAiUser/fastllm-master/src/devices/npu/ascenddevice.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_npu_swiglu_softmax.dir/build.make CMakeFiles/test_npu_swiglu_softmax.dir/home/HwHiAiUser/fastllm-master/src/devices/npu/ascenddevice.cpp.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_npu.dir/build.make CMakeFiles/test_npu.dir/home/HwHiAiUser/fastllm-master/src/devices/npu/ascenddevice.cpp.i
 .PHONY : home/HwHiAiUser/fastllm-master/src/devices/npu/ascenddevice.cpp.i
 
 home/HwHiAiUser/fastllm-master/src/devices/npu/ascenddevice.s: home/HwHiAiUser/fastllm-master/src/devices/npu/ascenddevice.cpp.s
@@ -366,7 +366,7 @@ home/HwHiAiUser/fastllm-master/src/devices/npu/ascenddevice.s: home/HwHiAiUser/f
 
 # target to generate assembly for a file
 home/HwHiAiUser/fastllm-master/src/devices/npu/ascenddevice.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_npu_swiglu_softmax.dir/build.make CMakeFiles/test_npu_swiglu_softmax.dir/home/HwHiAiUser/fastllm-master/src/devices/npu/ascenddevice.cpp.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_npu.dir/build.make CMakeFiles/test_npu.dir/home/HwHiAiUser/fastllm-master/src/devices/npu/ascenddevice.cpp.s
 .PHONY : home/HwHiAiUser/fastllm-master/src/devices/npu/ascenddevice.cpp.s
 
 home/HwHiAiUser/fastllm-master/src/devices/npu/fastllm-ascend.o: home/HwHiAiUser/fastllm-master/src/devices/npu/fastllm-ascend.cpp.o
@@ -374,7 +374,7 @@ home/HwHiAiUser/fastllm-master/src/devices/npu/fastllm-ascend.o: home/HwHiAiUser
 
 # target to build an object file
 home/HwHiAiUser/fastllm-master/src/devices/npu/fastllm-ascend.cpp.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_npu_swiglu_softmax.dir/build.make CMakeFiles/test_npu_swiglu_softmax.dir/home/HwHiAiUser/fastllm-master/src/devices/npu/fastllm-ascend.cpp.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_npu.dir/build.make CMakeFiles/test_npu.dir/home/HwHiAiUser/fastllm-master/src/devices/npu/fastllm-ascend.cpp.o
 .PHONY : home/HwHiAiUser/fastllm-master/src/devices/npu/fastllm-ascend.cpp.o
 
 home/HwHiAiUser/fastllm-master/src/devices/npu/fastllm-ascend.i: home/HwHiAiUser/fastllm-master/src/devices/npu/fastllm-ascend.cpp.i
@@ -382,7 +382,7 @@ home/HwHiAiUser/fastllm-master/src/devices/npu/fastllm-ascend.i: home/HwHiAiUser
 
 # target to preprocess a source file
 home/HwHiAiUser/fastllm-master/src/devices/npu/fastllm-ascend.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_npu_swiglu_softmax.dir/build.make CMakeFiles/test_npu_swiglu_softmax.dir/home/HwHiAiUser/fastllm-master/src/devices/npu/fastllm-ascend.cpp.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_npu.dir/build.make CMakeFiles/test_npu.dir/home/HwHiAiUser/fastllm-master/src/devices/npu/fastllm-ascend.cpp.i
 .PHONY : home/HwHiAiUser/fastllm-master/src/devices/npu/fastllm-ascend.cpp.i
 
 home/HwHiAiUser/fastllm-master/src/devices/npu/fastllm-ascend.s: home/HwHiAiUser/fastllm-master/src/devices/npu/fastllm-ascend.cpp.s
@@ -390,7 +390,7 @@ home/HwHiAiUser/fastllm-master/src/devices/npu/fastllm-ascend.s: home/HwHiAiUser
 
 # target to generate assembly for a file
 home/HwHiAiUser/fastllm-master/src/devices/npu/fastllm-ascend.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_npu_swiglu_softmax.dir/build.make CMakeFiles/test_npu_swiglu_softmax.dir/home/HwHiAiUser/fastllm-master/src/devices/npu/fastllm-ascend.cpp.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_npu.dir/build.make CMakeFiles/test_npu.dir/home/HwHiAiUser/fastllm-master/src/devices/npu/fastllm-ascend.cpp.s
 .PHONY : home/HwHiAiUser/fastllm-master/src/devices/npu/fastllm-ascend.cpp.s
 
 home/HwHiAiUser/fastllm-master/src/executor.o: home/HwHiAiUser/fastllm-master/src/executor.cpp.o
@@ -398,7 +398,7 @@ home/HwHiAiUser/fastllm-master/src/executor.o: home/HwHiAiUser/fastllm-master/sr
 
 # target to build an object file
 home/HwHiAiUser/fastllm-master/src/executor.cpp.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_npu_swiglu_softmax.dir/build.make CMakeFiles/test_npu_swiglu_softmax.dir/home/HwHiAiUser/fastllm-master/src/executor.cpp.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_npu.dir/build.make CMakeFiles/test_npu.dir/home/HwHiAiUser/fastllm-master/src/executor.cpp.o
 .PHONY : home/HwHiAiUser/fastllm-master/src/executor.cpp.o
 
 home/HwHiAiUser/fastllm-master/src/executor.i: home/HwHiAiUser/fastllm-master/src/executor.cpp.i
@@ -406,7 +406,7 @@ home/HwHiAiUser/fastllm-master/src/executor.i: home/HwHiAiUser/fastllm-master/sr
 
 # target to preprocess a source file
 home/HwHiAiUser/fastllm-master/src/executor.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_npu_swiglu_softmax.dir/build.make CMakeFiles/test_npu_swiglu_softmax.dir/home/HwHiAiUser/fastllm-master/src/executor.cpp.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_npu.dir/build.make CMakeFiles/test_npu.dir/home/HwHiAiUser/fastllm-master/src/executor.cpp.i
 .PHONY : home/HwHiAiUser/fastllm-master/src/executor.cpp.i
 
 home/HwHiAiUser/fastllm-master/src/executor.s: home/HwHiAiUser/fastllm-master/src/executor.cpp.s
@@ -414,7 +414,7 @@ home/HwHiAiUser/fastllm-master/src/executor.s: home/HwHiAiUser/fastllm-master/sr
 
 # target to generate assembly for a file
 home/HwHiAiUser/fastllm-master/src/executor.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_npu_swiglu_softmax.dir/build.make CMakeFiles/test_npu_swiglu_softmax.dir/home/HwHiAiUser/fastllm-master/src/executor.cpp.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_npu.dir/build.make CMakeFiles/test_npu.dir/home/HwHiAiUser/fastllm-master/src/executor.cpp.s
 .PHONY : home/HwHiAiUser/fastllm-master/src/executor.cpp.s
 
 home/HwHiAiUser/fastllm-master/src/fastllm.o: home/HwHiAiUser/fastllm-master/src/fastllm.cpp.o
@@ -422,7 +422,7 @@ home/HwHiAiUser/fastllm-master/src/fastllm.o: home/HwHiAiUser/fastllm-master/src
 
 # target to build an object file
 home/HwHiAiUser/fastllm-master/src/fastllm.cpp.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_npu_swiglu_softmax.dir/build.make CMakeFiles/test_npu_swiglu_softmax.dir/home/HwHiAiUser/fastllm-master/src/fastllm.cpp.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_npu.dir/build.make CMakeFiles/test_npu.dir/home/HwHiAiUser/fastllm-master/src/fastllm.cpp.o
 .PHONY : home/HwHiAiUser/fastllm-master/src/fastllm.cpp.o
 
 home/HwHiAiUser/fastllm-master/src/fastllm.i: home/HwHiAiUser/fastllm-master/src/fastllm.cpp.i
@@ -430,7 +430,7 @@ home/HwHiAiUser/fastllm-master/src/fastllm.i: home/HwHiAiUser/fastllm-master/src
 
 # target to preprocess a source file
 home/HwHiAiUser/fastllm-master/src/fastllm.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_npu_swiglu_softmax.dir/build.make CMakeFiles/test_npu_swiglu_softmax.dir/home/HwHiAiUser/fastllm-master/src/fastllm.cpp.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_npu.dir/build.make CMakeFiles/test_npu.dir/home/HwHiAiUser/fastllm-master/src/fastllm.cpp.i
 .PHONY : home/HwHiAiUser/fastllm-master/src/fastllm.cpp.i
 
 home/HwHiAiUser/fastllm-master/src/fastllm.s: home/HwHiAiUser/fastllm-master/src/fastllm.cpp.s
@@ -438,7 +438,7 @@ home/HwHiAiUser/fastllm-master/src/fastllm.s: home/HwHiAiUser/fastllm-master/src
 
 # target to generate assembly for a file
 home/HwHiAiUser/fastllm-master/src/fastllm.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_npu_swiglu_softmax.dir/build.make CMakeFiles/test_npu_swiglu_softmax.dir/home/HwHiAiUser/fastllm-master/src/fastllm.cpp.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_npu.dir/build.make CMakeFiles/test_npu.dir/home/HwHiAiUser/fastllm-master/src/fastllm.cpp.s
 .PHONY : home/HwHiAiUser/fastllm-master/src/fastllm.cpp.s
 
 home/HwHiAiUser/fastllm-master/src/template.o: home/HwHiAiUser/fastllm-master/src/template.cpp.o
@@ -446,7 +446,7 @@ home/HwHiAiUser/fastllm-master/src/template.o: home/HwHiAiUser/fastllm-master/sr
 
 # target to build an object file
 home/HwHiAiUser/fastllm-master/src/template.cpp.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_npu_swiglu_softmax.dir/build.make CMakeFiles/test_npu_swiglu_softmax.dir/home/HwHiAiUser/fastllm-master/src/template.cpp.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_npu.dir/build.make CMakeFiles/test_npu.dir/home/HwHiAiUser/fastllm-master/src/template.cpp.o
 .PHONY : home/HwHiAiUser/fastllm-master/src/template.cpp.o
 
 home/HwHiAiUser/fastllm-master/src/template.i: home/HwHiAiUser/fastllm-master/src/template.cpp.i
@@ -454,7 +454,7 @@ home/HwHiAiUser/fastllm-master/src/template.i: home/HwHiAiUser/fastllm-master/sr
 
 # target to preprocess a source file
 home/HwHiAiUser/fastllm-master/src/template.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_npu_swiglu_softmax.dir/build.make CMakeFiles/test_npu_swiglu_softmax.dir/home/HwHiAiUser/fastllm-master/src/template.cpp.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_npu.dir/build.make CMakeFiles/test_npu.dir/home/HwHiAiUser/fastllm-master/src/template.cpp.i
 .PHONY : home/HwHiAiUser/fastllm-master/src/template.cpp.i
 
 home/HwHiAiUser/fastllm-master/src/template.s: home/HwHiAiUser/fastllm-master/src/template.cpp.s
@@ -462,7 +462,7 @@ home/HwHiAiUser/fastllm-master/src/template.s: home/HwHiAiUser/fastllm-master/sr
 
 # target to generate assembly for a file
 home/HwHiAiUser/fastllm-master/src/template.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_npu_swiglu_softmax.dir/build.make CMakeFiles/test_npu_swiglu_softmax.dir/home/HwHiAiUser/fastllm-master/src/template.cpp.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_npu.dir/build.make CMakeFiles/test_npu.dir/home/HwHiAiUser/fastllm-master/src/template.cpp.s
 .PHONY : home/HwHiAiUser/fastllm-master/src/template.cpp.s
 
 home/HwHiAiUser/fastllm-master/src/tokenizer.o: home/HwHiAiUser/fastllm-master/src/tokenizer.cpp.o
@@ -470,7 +470,7 @@ home/HwHiAiUser/fastllm-master/src/tokenizer.o: home/HwHiAiUser/fastllm-master/s
 
 # target to build an object file
 home/HwHiAiUser/fastllm-master/src/tokenizer.cpp.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_npu_swiglu_softmax.dir/build.make CMakeFiles/test_npu_swiglu_softmax.dir/home/HwHiAiUser/fastllm-master/src/tokenizer.cpp.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_npu.dir/build.make CMakeFiles/test_npu.dir/home/HwHiAiUser/fastllm-master/src/tokenizer.cpp.o
 .PHONY : home/HwHiAiUser/fastllm-master/src/tokenizer.cpp.o
 
 home/HwHiAiUser/fastllm-master/src/tokenizer.i: home/HwHiAiUser/fastllm-master/src/tokenizer.cpp.i
@@ -478,7 +478,7 @@ home/HwHiAiUser/fastllm-master/src/tokenizer.i: home/HwHiAiUser/fastllm-master/s
 
 # target to preprocess a source file
 home/HwHiAiUser/fastllm-master/src/tokenizer.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_npu_swiglu_softmax.dir/build.make CMakeFiles/test_npu_swiglu_softmax.dir/home/HwHiAiUser/fastllm-master/src/tokenizer.cpp.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_npu.dir/build.make CMakeFiles/test_npu.dir/home/HwHiAiUser/fastllm-master/src/tokenizer.cpp.i
 .PHONY : home/HwHiAiUser/fastllm-master/src/tokenizer.cpp.i
 
 home/HwHiAiUser/fastllm-master/src/tokenizer.s: home/HwHiAiUser/fastllm-master/src/tokenizer.cpp.s
@@ -486,7 +486,7 @@ home/HwHiAiUser/fastllm-master/src/tokenizer.s: home/HwHiAiUser/fastllm-master/s
 
 # target to generate assembly for a file
 home/HwHiAiUser/fastllm-master/src/tokenizer.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_npu_swiglu_softmax.dir/build.make CMakeFiles/test_npu_swiglu_softmax.dir/home/HwHiAiUser/fastllm-master/src/tokenizer.cpp.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_npu.dir/build.make CMakeFiles/test_npu.dir/home/HwHiAiUser/fastllm-master/src/tokenizer.cpp.s
 .PHONY : home/HwHiAiUser/fastllm-master/src/tokenizer.cpp.s
 
 home/HwHiAiUser/fastllm-master/third_party/gguf/ggml-dequantize.o: home/HwHiAiUser/fastllm-master/third_party/gguf/ggml-dequantize.cpp.o
@@ -494,7 +494,7 @@ home/HwHiAiUser/fastllm-master/third_party/gguf/ggml-dequantize.o: home/HwHiAiUs
 
 # target to build an object file
 home/HwHiAiUser/fastllm-master/third_party/gguf/ggml-dequantize.cpp.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_npu_swiglu_softmax.dir/build.make CMakeFiles/test_npu_swiglu_softmax.dir/home/HwHiAiUser/fastllm-master/third_party/gguf/ggml-dequantize.cpp.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_npu.dir/build.make CMakeFiles/test_npu.dir/home/HwHiAiUser/fastllm-master/third_party/gguf/ggml-dequantize.cpp.o
 .PHONY : home/HwHiAiUser/fastllm-master/third_party/gguf/ggml-dequantize.cpp.o
 
 home/HwHiAiUser/fastllm-master/third_party/gguf/ggml-dequantize.i: home/HwHiAiUser/fastllm-master/third_party/gguf/ggml-dequantize.cpp.i
@@ -502,7 +502,7 @@ home/HwHiAiUser/fastllm-master/third_party/gguf/ggml-dequantize.i: home/HwHiAiUs
 
 # target to preprocess a source file
 home/HwHiAiUser/fastllm-master/third_party/gguf/ggml-dequantize.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_npu_swiglu_softmax.dir/build.make CMakeFiles/test_npu_swiglu_softmax.dir/home/HwHiAiUser/fastllm-master/third_party/gguf/ggml-dequantize.cpp.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_npu.dir/build.make CMakeFiles/test_npu.dir/home/HwHiAiUser/fastllm-master/third_party/gguf/ggml-dequantize.cpp.i
 .PHONY : home/HwHiAiUser/fastllm-master/third_party/gguf/ggml-dequantize.cpp.i
 
 home/HwHiAiUser/fastllm-master/third_party/gguf/ggml-dequantize.s: home/HwHiAiUser/fastllm-master/third_party/gguf/ggml-dequantize.cpp.s
@@ -510,7 +510,7 @@ home/HwHiAiUser/fastllm-master/third_party/gguf/ggml-dequantize.s: home/HwHiAiUs
 
 # target to generate assembly for a file
 home/HwHiAiUser/fastllm-master/third_party/gguf/ggml-dequantize.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_npu_swiglu_softmax.dir/build.make CMakeFiles/test_npu_swiglu_softmax.dir/home/HwHiAiUser/fastllm-master/third_party/gguf/ggml-dequantize.cpp.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_npu.dir/build.make CMakeFiles/test_npu.dir/home/HwHiAiUser/fastllm-master/third_party/gguf/ggml-dequantize.cpp.s
 .PHONY : home/HwHiAiUser/fastllm-master/third_party/gguf/ggml-dequantize.cpp.s
 
 home/HwHiAiUser/fastllm-master/third_party/gguf/ggml-iqk.o: home/HwHiAiUser/fastllm-master/third_party/gguf/ggml-iqk.cpp.o
@@ -518,7 +518,7 @@ home/HwHiAiUser/fastllm-master/third_party/gguf/ggml-iqk.o: home/HwHiAiUser/fast
 
 # target to build an object file
 home/HwHiAiUser/fastllm-master/third_party/gguf/ggml-iqk.cpp.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_npu_swiglu_softmax.dir/build.make CMakeFiles/test_npu_swiglu_softmax.dir/home/HwHiAiUser/fastllm-master/third_party/gguf/ggml-iqk.cpp.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_npu.dir/build.make CMakeFiles/test_npu.dir/home/HwHiAiUser/fastllm-master/third_party/gguf/ggml-iqk.cpp.o
 .PHONY : home/HwHiAiUser/fastllm-master/third_party/gguf/ggml-iqk.cpp.o
 
 home/HwHiAiUser/fastllm-master/third_party/gguf/ggml-iqk.i: home/HwHiAiUser/fastllm-master/third_party/gguf/ggml-iqk.cpp.i
@@ -526,7 +526,7 @@ home/HwHiAiUser/fastllm-master/third_party/gguf/ggml-iqk.i: home/HwHiAiUser/fast
 
 # target to preprocess a source file
 home/HwHiAiUser/fastllm-master/third_party/gguf/ggml-iqk.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_npu_swiglu_softmax.dir/build.make CMakeFiles/test_npu_swiglu_softmax.dir/home/HwHiAiUser/fastllm-master/third_party/gguf/ggml-iqk.cpp.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_npu.dir/build.make CMakeFiles/test_npu.dir/home/HwHiAiUser/fastllm-master/third_party/gguf/ggml-iqk.cpp.i
 .PHONY : home/HwHiAiUser/fastllm-master/third_party/gguf/ggml-iqk.cpp.i
 
 home/HwHiAiUser/fastllm-master/third_party/gguf/ggml-iqk.s: home/HwHiAiUser/fastllm-master/third_party/gguf/ggml-iqk.cpp.s
@@ -534,7 +534,7 @@ home/HwHiAiUser/fastllm-master/third_party/gguf/ggml-iqk.s: home/HwHiAiUser/fast
 
 # target to generate assembly for a file
 home/HwHiAiUser/fastllm-master/third_party/gguf/ggml-iqk.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_npu_swiglu_softmax.dir/build.make CMakeFiles/test_npu_swiglu_softmax.dir/home/HwHiAiUser/fastllm-master/third_party/gguf/ggml-iqk.cpp.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_npu.dir/build.make CMakeFiles/test_npu.dir/home/HwHiAiUser/fastllm-master/third_party/gguf/ggml-iqk.cpp.s
 .PHONY : home/HwHiAiUser/fastllm-master/third_party/gguf/ggml-iqk.cpp.s
 
 home/HwHiAiUser/fastllm-master/third_party/gguf/ggml-quant.o: home/HwHiAiUser/fastllm-master/third_party/gguf/ggml-quant.cpp.o
@@ -542,7 +542,7 @@ home/HwHiAiUser/fastllm-master/third_party/gguf/ggml-quant.o: home/HwHiAiUser/fa
 
 # target to build an object file
 home/HwHiAiUser/fastllm-master/third_party/gguf/ggml-quant.cpp.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_npu_swiglu_softmax.dir/build.make CMakeFiles/test_npu_swiglu_softmax.dir/home/HwHiAiUser/fastllm-master/third_party/gguf/ggml-quant.cpp.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_npu.dir/build.make CMakeFiles/test_npu.dir/home/HwHiAiUser/fastllm-master/third_party/gguf/ggml-quant.cpp.o
 .PHONY : home/HwHiAiUser/fastllm-master/third_party/gguf/ggml-quant.cpp.o
 
 home/HwHiAiUser/fastllm-master/third_party/gguf/ggml-quant.i: home/HwHiAiUser/fastllm-master/third_party/gguf/ggml-quant.cpp.i
@@ -550,7 +550,7 @@ home/HwHiAiUser/fastllm-master/third_party/gguf/ggml-quant.i: home/HwHiAiUser/fa
 
 # target to preprocess a source file
 home/HwHiAiUser/fastllm-master/third_party/gguf/ggml-quant.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_npu_swiglu_softmax.dir/build.make CMakeFiles/test_npu_swiglu_softmax.dir/home/HwHiAiUser/fastllm-master/third_party/gguf/ggml-quant.cpp.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_npu.dir/build.make CMakeFiles/test_npu.dir/home/HwHiAiUser/fastllm-master/third_party/gguf/ggml-quant.cpp.i
 .PHONY : home/HwHiAiUser/fastllm-master/third_party/gguf/ggml-quant.cpp.i
 
 home/HwHiAiUser/fastllm-master/third_party/gguf/ggml-quant.s: home/HwHiAiUser/fastllm-master/third_party/gguf/ggml-quant.cpp.s
@@ -558,7 +558,7 @@ home/HwHiAiUser/fastllm-master/third_party/gguf/ggml-quant.s: home/HwHiAiUser/fa
 
 # target to generate assembly for a file
 home/HwHiAiUser/fastllm-master/third_party/gguf/ggml-quant.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_npu_swiglu_softmax.dir/build.make CMakeFiles/test_npu_swiglu_softmax.dir/home/HwHiAiUser/fastllm-master/third_party/gguf/ggml-quant.cpp.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_npu.dir/build.make CMakeFiles/test_npu.dir/home/HwHiAiUser/fastllm-master/third_party/gguf/ggml-quant.cpp.s
 .PHONY : home/HwHiAiUser/fastllm-master/third_party/gguf/ggml-quant.cpp.s
 
 home/HwHiAiUser/fastllm-master/third_party/gguf/gguf-adapter.o: home/HwHiAiUser/fastllm-master/third_party/gguf/gguf-adapter.cpp.o
@@ -566,7 +566,7 @@ home/HwHiAiUser/fastllm-master/third_party/gguf/gguf-adapter.o: home/HwHiAiUser/
 
 # target to build an object file
 home/HwHiAiUser/fastllm-master/third_party/gguf/gguf-adapter.cpp.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_npu_swiglu_softmax.dir/build.make CMakeFiles/test_npu_swiglu_softmax.dir/home/HwHiAiUser/fastllm-master/third_party/gguf/gguf-adapter.cpp.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_npu.dir/build.make CMakeFiles/test_npu.dir/home/HwHiAiUser/fastllm-master/third_party/gguf/gguf-adapter.cpp.o
 .PHONY : home/HwHiAiUser/fastllm-master/third_party/gguf/gguf-adapter.cpp.o
 
 home/HwHiAiUser/fastllm-master/third_party/gguf/gguf-adapter.i: home/HwHiAiUser/fastllm-master/third_party/gguf/gguf-adapter.cpp.i
@@ -574,7 +574,7 @@ home/HwHiAiUser/fastllm-master/third_party/gguf/gguf-adapter.i: home/HwHiAiUser/
 
 # target to preprocess a source file
 home/HwHiAiUser/fastllm-master/third_party/gguf/gguf-adapter.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_npu_swiglu_softmax.dir/build.make CMakeFiles/test_npu_swiglu_softmax.dir/home/HwHiAiUser/fastllm-master/third_party/gguf/gguf-adapter.cpp.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_npu.dir/build.make CMakeFiles/test_npu.dir/home/HwHiAiUser/fastllm-master/third_party/gguf/gguf-adapter.cpp.i
 .PHONY : home/HwHiAiUser/fastllm-master/third_party/gguf/gguf-adapter.cpp.i
 
 home/HwHiAiUser/fastllm-master/third_party/gguf/gguf-adapter.s: home/HwHiAiUser/fastllm-master/third_party/gguf/gguf-adapter.cpp.s
@@ -582,7 +582,7 @@ home/HwHiAiUser/fastllm-master/third_party/gguf/gguf-adapter.s: home/HwHiAiUser/
 
 # target to generate assembly for a file
 home/HwHiAiUser/fastllm-master/third_party/gguf/gguf-adapter.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_npu_swiglu_softmax.dir/build.make CMakeFiles/test_npu_swiglu_softmax.dir/home/HwHiAiUser/fastllm-master/third_party/gguf/gguf-adapter.cpp.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_npu.dir/build.make CMakeFiles/test_npu.dir/home/HwHiAiUser/fastllm-master/third_party/gguf/gguf-adapter.cpp.s
 .PHONY : home/HwHiAiUser/fastllm-master/third_party/gguf/gguf-adapter.cpp.s
 
 home/HwHiAiUser/fastllm-master/third_party/gguf/gguf.o: home/HwHiAiUser/fastllm-master/third_party/gguf/gguf.cpp.o
@@ -590,7 +590,7 @@ home/HwHiAiUser/fastllm-master/third_party/gguf/gguf.o: home/HwHiAiUser/fastllm-
 
 # target to build an object file
 home/HwHiAiUser/fastllm-master/third_party/gguf/gguf.cpp.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_npu_swiglu_softmax.dir/build.make CMakeFiles/test_npu_swiglu_softmax.dir/home/HwHiAiUser/fastllm-master/third_party/gguf/gguf.cpp.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_npu.dir/build.make CMakeFiles/test_npu.dir/home/HwHiAiUser/fastllm-master/third_party/gguf/gguf.cpp.o
 .PHONY : home/HwHiAiUser/fastllm-master/third_party/gguf/gguf.cpp.o
 
 home/HwHiAiUser/fastllm-master/third_party/gguf/gguf.i: home/HwHiAiUser/fastllm-master/third_party/gguf/gguf.cpp.i
@@ -598,7 +598,7 @@ home/HwHiAiUser/fastllm-master/third_party/gguf/gguf.i: home/HwHiAiUser/fastllm-
 
 # target to preprocess a source file
 home/HwHiAiUser/fastllm-master/third_party/gguf/gguf.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_npu_swiglu_softmax.dir/build.make CMakeFiles/test_npu_swiglu_softmax.dir/home/HwHiAiUser/fastllm-master/third_party/gguf/gguf.cpp.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_npu.dir/build.make CMakeFiles/test_npu.dir/home/HwHiAiUser/fastllm-master/third_party/gguf/gguf.cpp.i
 .PHONY : home/HwHiAiUser/fastllm-master/third_party/gguf/gguf.cpp.i
 
 home/HwHiAiUser/fastllm-master/third_party/gguf/gguf.s: home/HwHiAiUser/fastllm-master/third_party/gguf/gguf.cpp.s
@@ -606,7 +606,7 @@ home/HwHiAiUser/fastllm-master/third_party/gguf/gguf.s: home/HwHiAiUser/fastllm-
 
 # target to generate assembly for a file
 home/HwHiAiUser/fastllm-master/third_party/gguf/gguf.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_npu_swiglu_softmax.dir/build.make CMakeFiles/test_npu_swiglu_softmax.dir/home/HwHiAiUser/fastllm-master/third_party/gguf/gguf.cpp.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_npu.dir/build.make CMakeFiles/test_npu.dir/home/HwHiAiUser/fastllm-master/third_party/gguf/gguf.cpp.s
 .PHONY : home/HwHiAiUser/fastllm-master/third_party/gguf/gguf.cpp.s
 
 home/HwHiAiUser/fastllm-master/third_party/json11/json11.o: home/HwHiAiUser/fastllm-master/third_party/json11/json11.cpp.o
@@ -614,7 +614,7 @@ home/HwHiAiUser/fastllm-master/third_party/json11/json11.o: home/HwHiAiUser/fast
 
 # target to build an object file
 home/HwHiAiUser/fastllm-master/third_party/json11/json11.cpp.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_npu_swiglu_softmax.dir/build.make CMakeFiles/test_npu_swiglu_softmax.dir/home/HwHiAiUser/fastllm-master/third_party/json11/json11.cpp.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_npu.dir/build.make CMakeFiles/test_npu.dir/home/HwHiAiUser/fastllm-master/third_party/json11/json11.cpp.o
 .PHONY : home/HwHiAiUser/fastllm-master/third_party/json11/json11.cpp.o
 
 home/HwHiAiUser/fastllm-master/third_party/json11/json11.i: home/HwHiAiUser/fastllm-master/third_party/json11/json11.cpp.i
@@ -622,7 +622,7 @@ home/HwHiAiUser/fastllm-master/third_party/json11/json11.i: home/HwHiAiUser/fast
 
 # target to preprocess a source file
 home/HwHiAiUser/fastllm-master/third_party/json11/json11.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_npu_swiglu_softmax.dir/build.make CMakeFiles/test_npu_swiglu_softmax.dir/home/HwHiAiUser/fastllm-master/third_party/json11/json11.cpp.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_npu.dir/build.make CMakeFiles/test_npu.dir/home/HwHiAiUser/fastllm-master/third_party/json11/json11.cpp.i
 .PHONY : home/HwHiAiUser/fastllm-master/third_party/json11/json11.cpp.i
 
 home/HwHiAiUser/fastllm-master/third_party/json11/json11.s: home/HwHiAiUser/fastllm-master/third_party/json11/json11.cpp.s
@@ -630,32 +630,32 @@ home/HwHiAiUser/fastllm-master/third_party/json11/json11.s: home/HwHiAiUser/fast
 
 # target to generate assembly for a file
 home/HwHiAiUser/fastllm-master/third_party/json11/json11.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_npu_swiglu_softmax.dir/build.make CMakeFiles/test_npu_swiglu_softmax.dir/home/HwHiAiUser/fastllm-master/third_party/json11/json11.cpp.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_npu.dir/build.make CMakeFiles/test_npu.dir/home/HwHiAiUser/fastllm-master/third_party/json11/json11.cpp.s
 .PHONY : home/HwHiAiUser/fastllm-master/third_party/json11/json11.cpp.s
 
-test_npu_swiglu_softmax.o: test_npu_swiglu_softmax.cpp.o
-.PHONY : test_npu_swiglu_softmax.o
+test_npu.o: test_npu.cpp.o
+.PHONY : test_npu.o
 
 # target to build an object file
-test_npu_swiglu_softmax.cpp.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_npu_swiglu_softmax.dir/build.make CMakeFiles/test_npu_swiglu_softmax.dir/test_npu_swiglu_softmax.cpp.o
-.PHONY : test_npu_swiglu_softmax.cpp.o
+test_npu.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_npu.dir/build.make CMakeFiles/test_npu.dir/test_npu.cpp.o
+.PHONY : test_npu.cpp.o
 
-test_npu_swiglu_softmax.i: test_npu_swiglu_softmax.cpp.i
-.PHONY : test_npu_swiglu_softmax.i
+test_npu.i: test_npu.cpp.i
+.PHONY : test_npu.i
 
 # target to preprocess a source file
-test_npu_swiglu_softmax.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_npu_swiglu_softmax.dir/build.make CMakeFiles/test_npu_swiglu_softmax.dir/test_npu_swiglu_softmax.cpp.i
-.PHONY : test_npu_swiglu_softmax.cpp.i
+test_npu.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_npu.dir/build.make CMakeFiles/test_npu.dir/test_npu.cpp.i
+.PHONY : test_npu.cpp.i
 
-test_npu_swiglu_softmax.s: test_npu_swiglu_softmax.cpp.s
-.PHONY : test_npu_swiglu_softmax.s
+test_npu.s: test_npu.cpp.s
+.PHONY : test_npu.s
 
 # target to generate assembly for a file
-test_npu_swiglu_softmax.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_npu_swiglu_softmax.dir/build.make CMakeFiles/test_npu_swiglu_softmax.dir/test_npu_swiglu_softmax.cpp.s
-.PHONY : test_npu_swiglu_softmax.cpp.s
+test_npu.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_npu.dir/build.make CMakeFiles/test_npu.dir/test_npu.cpp.s
+.PHONY : test_npu.cpp.s
 
 # Help Target
 help:
@@ -665,7 +665,7 @@ help:
 	@echo "... depend"
 	@echo "... edit_cache"
 	@echo "... rebuild_cache"
-	@echo "... test_npu_swiglu_softmax"
+	@echo "... test_npu"
 	@echo "... home/HwHiAiUser/fastllm-master/src/device.o"
 	@echo "... home/HwHiAiUser/fastllm-master/src/device.i"
 	@echo "... home/HwHiAiUser/fastllm-master/src/device.s"
@@ -729,9 +729,9 @@ help:
 	@echo "... home/HwHiAiUser/fastllm-master/third_party/json11/json11.o"
 	@echo "... home/HwHiAiUser/fastllm-master/third_party/json11/json11.i"
 	@echo "... home/HwHiAiUser/fastllm-master/third_party/json11/json11.s"
-	@echo "... test_npu_swiglu_softmax.o"
-	@echo "... test_npu_swiglu_softmax.i"
-	@echo "... test_npu_swiglu_softmax.s"
+	@echo "... test_npu.o"
+	@echo "... test_npu.i"
+	@echo "... test_npu.s"
 .PHONY : help
 
 

@@ -18,6 +18,10 @@
  #include "fastllm-ascend.h"
  #include "acl/acl_op.h" // Legacy Ops (Required for 310P compatibility)
  #include "acl/acl.h"
+ #include "aclnnop/aclnn_add.h"
+ #include "aclnnop/aclnn_mul.h"
+ #include "aclnnop/aclnn_permute.h"
+ #include "aclnnop/aclnn_rotary_position_embedding.h"
  #include "aclnnop/aclnn_quant_matmul_dequant.h"
  #include "aclnnop/aclnn_softmax.h"
  #include "aclnnop/aclnn_rms_norm.h"
@@ -429,172 +433,6 @@ namespace fastllm {
         aclDestroyTensor(tSrc); aclDestroyTensor(tDst);
     }
 
-    // =======================================================================
-    // aclop Implementation (Legacy/Basic Ops)
-    // =======================================================================
-
-    void CreateAclOpTensor(const Data &data, const std::vector<int64_t>& dims, aclTensorDesc** desc, aclDataBuffer** buf) {
-        aclDataType type = ACL_FLOAT;
-        if (data.dataType == DataType::FLOAT16) type = ACL_FLOAT16;
-        else if (data.dataType == DataType::FLOAT32) type = ACL_FLOAT;
-
-        *desc = aclCreateTensorDesc(type, dims.size(), dims.data(), ACL_FORMAT_ND);
-        *buf = aclCreateDataBuffer(data.deviceData, data.GetBytes());
-    }
-    
-    std::vector<int64_t> ToDims64(const std::vector<int>& dims) {
-        std::vector<int64_t> ret;
-        for(int d : dims) ret.push_back(d);
-        return ret;
-    }
-
-    // Basic arithmetic can stick to aclop as it is very stable
-    void FastllmAclAdd(const Data &input, float v, Data &output) {
-        aclTensorDesc *dIn, *dOut; aclDataBuffer *bIn, *bOut;
-        CreateAclOpTensor(input, ToDims64(input.dims), &dIn, &bIn);
-        CreateAclOpTensor(output, ToDims64(output.dims), &dOut, &bOut);
-        
-        DeviceScalar scalar(v);
-        std::vector<aclTensorDesc*> inD = {dIn, scalar.desc};
-        std::vector<aclDataBuffer*> inB = {bIn, scalar.buf};
-        std::vector<aclTensorDesc*> outD = {dOut};
-        std::vector<aclDataBuffer*> outB = {bOut};
-
-        aclopExecuteV2("Add", inD.size(), inD.data(), inB.data(), outD.size(), outD.data(), outB.data(),
-                       nullptr, GetFastllmAclStream());
-        
-        aclrtSynchronizeStream(GetFastllmAclStream()); 
-        aclDestroyTensorDesc(dIn); aclDestroyDataBuffer(bIn);
-        aclDestroyTensorDesc(dOut); aclDestroyDataBuffer(bOut);
-    }
-
-    void FastllmAclAddTo(const Data &input0, const Data &input1, float alpha) {
-        aclTensorDesc *dX, *dY, *dOut; aclDataBuffer *bX, *bY, *bOut;
-        CreateAclOpTensor(input1, ToDims64(input1.dims), &dX, &bX); 
-        CreateAclOpTensor(input0, ToDims64(input0.dims), &dY, &bY); 
-        CreateAclOpTensor(input0, ToDims64(input0.dims), &dOut, &bOut); 
-
-        aclopAttr *attr = aclopCreateAttr();
-        aclopSetAttrFloat(attr, "alpha", alpha);
-
-        std::vector<aclTensorDesc*> inD = {dX, dY};
-        std::vector<aclDataBuffer*> inB = {bX, bY};
-        std::vector<aclTensorDesc*> outD = {dOut};
-        std::vector<aclDataBuffer*> outB = {bOut};
-
-        aclopExecuteV2("Axpy", inD.size(), inD.data(), inB.data(), outD.size(), outD.data(), outB.data(),
-                       attr, GetFastllmAclStream());
-
-        aclDestroyTensorDesc(dX); aclDestroyDataBuffer(bX);
-        aclDestroyTensorDesc(dY); aclDestroyDataBuffer(bY);
-        aclDestroyTensorDesc(dOut); aclDestroyDataBuffer(bOut);
-        aclopDestroyAttr(attr);
-    }
-
-    void FastllmAclMul(const Data &input, float v, Data &output) {
-        aclTensorDesc *dIn, *dOut; aclDataBuffer *bIn, *bOut;
-        CreateAclOpTensor(input, ToDims64(input.dims), &dIn, &bIn);
-        CreateAclOpTensor(output, ToDims64(output.dims), &dOut, &bOut);
-
-        aclopAttr *attr = aclopCreateAttr();
-        aclopSetAttrFloat(attr, "value", v);
-
-        std::vector<aclTensorDesc*> inD = {dIn}; std::vector<aclDataBuffer*> inB = {bIn};
-        std::vector<aclTensorDesc*> outD = {dOut}; std::vector<aclDataBuffer*> outB = {bOut};
-
-        aclopExecuteV2("Muls", inD.size(), inD.data(), inB.data(), outD.size(), outD.data(), outB.data(),
-                       attr, GetFastllmAclStream());
-
-        aclDestroyTensorDesc(dIn); aclDestroyDataBuffer(bIn);
-        aclDestroyTensorDesc(dOut); aclDestroyDataBuffer(bOut);
-        aclopDestroyAttr(attr);
-    }
-
-    void FastllmAclMulTo(const Data &input0, const Data &input1, float alpha) {
-        aclTensorDesc *dX, *dY, *dOut; aclDataBuffer *bX, *bY, *bOut;
-        CreateAclOpTensor(input1, ToDims64(input1.dims), &dX, &bX);
-        CreateAclOpTensor(input0, ToDims64(input0.dims), &dY, &bY);
-        CreateAclOpTensor(input0, ToDims64(input0.dims), &dOut, &bOut);
-
-        std::vector<aclTensorDesc*> inD = {dY, dX};
-        std::vector<aclDataBuffer*> inB = {bY, bX};
-        std::vector<aclTensorDesc*> outD = {dOut};
-        std::vector<aclDataBuffer*> outB = {bOut};
-
-        aclopExecuteV2("Mul", inD.size(), inD.data(), inB.data(), outD.size(), outD.data(), outB.data(),
-                       nullptr, GetFastllmAclStream());
-
-        aclDestroyTensorDesc(dX); aclDestroyDataBuffer(bX);
-        aclDestroyTensorDesc(dY); aclDestroyDataBuffer(bY);
-        if (std::abs(alpha - 1.0f) > 1e-6) {
-            FastllmAclMul(input0, alpha, const_cast<Data&>(input0));
-        }
-    }
-
-    void FastllmAclPermute(const Data &input, const std::vector<int> &axis) {
-        Data &mutableInput = const_cast<Data&>(input);
-        std::vector<int64_t> permData;
-        std::vector<int64_t> newDims;
-        for (int i : axis) {
-            newDims.push_back(mutableInput.dims[i]);
-            permData.push_back((int64_t)i);
-        }
-
-        size_t dataBytes = mutableInput.GetBytes();
-        void* tempPtr = FastllmAclMalloc(dataBytes); 
-        
-        aclTensorDesc *dIn, *dOut, *dPerm; aclDataBuffer *bIn, *bOut, *bPerm;
-        CreateAclOpTensor(mutableInput, ToDims64(mutableInput.dims), &dIn, &bIn);
-        
-        aclDataType type = (mutableInput.dataType == DataType::FLOAT16) ? ACL_FLOAT16 : ACL_FLOAT;
-        dOut = aclCreateTensorDesc(type, newDims.size(), newDims.data(), ACL_FORMAT_ND);
-        bOut = aclCreateDataBuffer(tempPtr, dataBytes);
-
-        void* permDevPtr = FastllmAclMalloc(permData.size() * sizeof(int64_t));
-        aclrtMemcpy(permDevPtr, permData.size() * sizeof(int64_t), permData.data(), permData.size() * sizeof(int64_t), ACL_MEMCPY_HOST_TO_DEVICE);
-        std::vector<int64_t> permShape = {(int64_t)permData.size()};
-        dPerm = aclCreateTensorDesc(ACL_INT64, 1, permShape.data(), ACL_FORMAT_ND);
-        bPerm = aclCreateDataBuffer(permDevPtr, permData.size() * sizeof(int64_t));
-
-        std::vector<aclTensorDesc*> inD = {dIn, dPerm}; std::vector<aclDataBuffer*> inB = {bIn, bPerm};
-        std::vector<aclTensorDesc*> outD = {dOut}; std::vector<aclDataBuffer*> outB = {bOut};
-
-        aclopExecuteV2("Transpose", inD.size(), inD.data(), inB.data(), outD.size(), outD.data(), outB.data(),
-                       nullptr, GetFastllmAclStream());
-
-        aclrtSynchronizeStream(GetFastllmAclStream());
-        aclrtMemcpy(mutableInput.deviceData, dataBytes, tempPtr, dataBytes, ACL_MEMCPY_DEVICE_TO_DEVICE);
-        
-        std::vector<int> intNewDims(newDims.begin(), newDims.end());
-        mutableInput.Resize(intNewDims);
-
-        aclDestroyTensorDesc(dIn); aclDestroyDataBuffer(bIn);
-        aclDestroyTensorDesc(dPerm); aclDestroyDataBuffer(bPerm);
-        aclDestroyTensorDesc(dOut); aclDestroyDataBuffer(bOut);
-        FastllmAclFree(tempPtr);
-        FastllmAclFree(permDevPtr);
-    }
-
-    void FastllmAclNearlyRotatePosition2D(const Data &data, const Data &positionIds, const Data &sinData, const Data &cosData, int rotaryDim) {
-        aclTensorDesc *dX, *dCos, *dSin, *dOut; aclDataBuffer *bX, *bCos, *bSin, *bOut;
-        CreateAclOpTensor(data, ToDims64(data.dims), &dX, &bX);
-        CreateAclOpTensor(cosData, ToDims64(cosData.dims), &dCos, &bCos);
-        CreateAclOpTensor(sinData, ToDims64(sinData.dims), &dSin, &bSin);
-        CreateAclOpTensor(data, ToDims64(data.dims), &dOut, &bOut);
-
-        std::vector<aclTensorDesc*> inD = {dX, dCos, dSin};
-        std::vector<aclDataBuffer*> inB = {bX, bCos, bSin};
-        std::vector<aclTensorDesc*> outD = {dOut};
-        std::vector<aclDataBuffer*> outB = {bOut};
-
-        aclopExecuteV2("RotaryMul", inD.size(), inD.data(), inB.data(), outD.size(), outD.data(), outB.data(),
-                       nullptr, GetFastllmAclStream());
-
-        aclDestroyTensorDesc(dX); aclDestroyDataBuffer(bX);
-        aclDestroyTensorDesc(dCos); aclDestroyDataBuffer(bCos);
-        aclDestroyTensorDesc(dSin); aclDestroyDataBuffer(bSin);
-        aclDestroyTensorDesc(dOut); aclDestroyDataBuffer(bOut);
-    }
 
     void FastllmAclAttentionMask(const Data &input, const Data &mask, float maskValue) {
         FastllmAclAddTo(const_cast<Data&>(input), mask, maskValue);
@@ -625,6 +463,236 @@ namespace fastllm {
         if (mask.dims.size() > 0) FastllmAclAddTo(score, mask, -10000.0f);
         FastllmAclSoftmax(score, score, -1);
         FastllmAclMatMul(score, v, Data(), output, 1, 0);
+    }
+
+        // =======================================================================
+    // aclop Implementation (Legacy/Basic Ops)
+    // =======================================================================
+
+    void CreateAclOpTensor(const Data &data, const std::vector<int64_t>& dims, aclTensorDesc** desc, aclDataBuffer** buf) {
+        aclDataType type = ACL_FLOAT;
+        if (data.dataType == DataType::FLOAT16) type = ACL_FLOAT16;
+        else if (data.dataType == DataType::FLOAT32) type = ACL_FLOAT;
+
+        *desc = aclCreateTensorDesc(type, dims.size(), dims.data(), ACL_FORMAT_ND);
+        *buf = aclCreateDataBuffer(data.deviceData, data.GetBytes());
+    }
+    
+    std::vector<int64_t> ToDims64(const std::vector<int>& dims) {
+        std::vector<int64_t> ret;
+        for(int d : dims) ret.push_back(d);
+        return ret;
+    }
+    void FastllmAclAdd(const Data &input, float v, Data &output) {
+        aclTensor *tSelf = CreateAclTensor(input, input.dims);
+        aclTensor *tOut = CreateAclTensor(output, output.dims);
+        aclScalar *sOther = aclCreateScalar(&v, ACL_FLOAT);
+        float alphaVal = 1.0f;
+        aclScalar *sAlpha = aclCreateScalar(&alphaVal, ACL_FLOAT);
+
+        uint64_t workspaceSize = 0;
+        aclOpExecutor *executor = nullptr;
+
+        aclnnAddsGetWorkspaceSize(tSelf, sOther, sAlpha, tOut, &workspaceSize, &executor);
+        
+        void *workspaceAddr = nullptr;
+        if (workspaceSize > 0) workspaceAddr = g_workspace.Get(workspaceSize);
+    
+        aclnnAdds(workspaceAddr, workspaceSize, executor, GetFastllmAclStream());
+
+        aclrtSynchronizeStream(GetFastllmAclStream());
+        aclDestroyTensor(tSelf); aclDestroyTensor(tOut);
+        aclDestroyScalar(sOther); aclDestroyScalar(sAlpha);
+    }
+
+
+    void FastllmAclAddTo(const Data &input0, const Data &input1, float alpha) {
+ 
+        aclTensor *tSelf = CreateAclTensor(input0, input0.dims);
+        aclTensor *tOther = CreateAclTensor(input1, input1.dims);
+
+        aclScalar *sAlpha = aclCreateScalar(&alpha, ACL_FLOAT);
+
+        uint64_t workspaceSize = 0;
+        aclOpExecutor *executor = nullptr;
+
+        aclnnAddGetWorkspaceSize(tSelf, tOther, sAlpha, tSelf, &workspaceSize, &executor);
+
+        void *workspaceAddr = nullptr;
+        if (workspaceSize > 0) {
+            workspaceAddr = g_workspace.Get(workspaceSize);
+        }
+    
+        aclnnAdd(workspaceAddr, workspaceSize, executor, GetFastllmAclStream());
+
+        aclrtSynchronizeStream(GetFastllmAclStream());
+
+        aclDestroyTensor(tSelf);
+        aclDestroyTensor(tOther);
+        aclDestroyScalar(sAlpha);
+    }
+
+
+    void FastllmAclMul(const Data &input, float v, Data &output) {
+        aclTensor *tSelf = CreateAclTensor(input, input.dims);
+        aclTensor *tOut = CreateAclTensor(output, output.dims);
+
+        aclScalar *sOther = aclCreateScalar(&v, ACL_FLOAT);
+
+        uint64_t workspaceSize = 0;
+        aclOpExecutor *executor = nullptr;
+
+        aclnnMulsGetWorkspaceSize(tSelf, sOther, tOut, &workspaceSize, &executor);
+
+        void *workspaceAddr = nullptr;
+        if (workspaceSize > 0) {
+            workspaceAddr = g_workspace.Get(workspaceSize);
+        }
+    
+        aclnnMuls(workspaceAddr, workspaceSize, executor, GetFastllmAclStream());
+
+        aclrtSynchronizeStream(GetFastllmAclStream());
+
+        aclDestroyTensor(tSelf);
+        aclDestroyTensor(tOut);
+        aclDestroyScalar(sOther);
+    }
+    
+
+    void FastllmAclMulTo(const Data &input0, const Data &input1, float alpha) {
+
+        aclTensor *tSelf = CreateAclTensor(input0, input0.dims); 
+        aclTensor *tOther = CreateAclTensor(input1, input1.dims);
+
+        uint64_t wsMul = 0;
+        aclOpExecutor *exMul = nullptr;
+
+        aclnnMulGetWorkspaceSize(tSelf, tOther, tSelf, &wsMul, &exMul);
+    
+        void *wsAddrMul = nullptr;
+        if (wsMul > 0) wsAddrMul = g_workspace.Get(wsMul);
+    
+        aclnnMul(wsAddrMul, wsMul, exMul, GetFastllmAclStream());
+
+        if (std::abs(alpha - 1.0f) > 1e-6) {
+            aclScalar *sAlpha = aclCreateScalar(&alpha, ACL_FLOAT);
+            uint64_t wsScale = 0;
+            aclOpExecutor *exScale = nullptr;
+
+            aclnnInplaceMulsGetWorkspaceSize(tSelf, sAlpha, &wsScale, &exScale);
+    
+            void *wsAddrScale = nullptr;
+            if (wsScale > 0) wsAddrScale = g_workspace.Get(wsScale);
+    
+            aclnnInplaceMuls(wsAddrScale, wsScale, exScale, GetFastllmAclStream());
+            
+            aclDestroyScalar(sAlpha);
+        }
+
+        aclrtSynchronizeStream(GetFastllmAclStream());
+    
+        aclDestroyTensor(tSelf);
+        aclDestroyTensor(tOther);
+    }
+
+    void FastllmAclPermute(const Data &input, const std::vector<int> &axis) {
+        Data &mutableInput = const_cast<Data&>(input);
+
+        std::vector<int64_t> axisInt64;
+        std::vector<int64_t> newDims;
+        for (int i : axis) {
+            axisInt64.push_back((int64_t)i);
+            newDims.push_back(mutableInput.dims[i]);
+        }
+        aclIntArray *permArray = aclCreateIntArray(axisInt64.data(), axisInt64.size());
+    
+        // 2. 准备输出 (Temp Buffer)
+        // Permute 涉及内存重排，无法 In-Place，必须先输出到临时区
+        size_t dataBytes = mutableInput.GetBytes();
+        void* tempPtr = FastllmAclMalloc(dataBytes);
+    
+        // 为了复用 CreateAclTensor，我们构造一个临时的 Data 对象描述 Output
+        // 注意：这里只用于生成 TensorDesc，不拥有内存所有权
+        Data tempOutData;
+        tempOutData.dataType = mutableInput.dataType;
+        tempOutData.Resize(std::vector<int>(newDims.begin(), newDims.end()));
+        tempOutData.deviceData = tempPtr;
+    
+        // 3. 构造 ACL Tensor
+        aclTensor *tSelf = CreateAclTensor(mutableInput, mutableInput.dims);
+        aclTensor *tOut = CreateAclTensor(tempOutData, tempOutData.dims);
+    
+        // 4. 获取 Workspace 并执行
+        uint64_t workspaceSize = 0;
+        aclOpExecutor *executor = nullptr;
+    
+        aclnnPermuteGetWorkspaceSize(tSelf, permArray, tOut, &workspaceSize, &executor);
+    
+        void *workspaceAddr = nullptr;
+        if (workspaceSize > 0) {
+            workspaceAddr = g_workspace.Get(workspaceSize);
+        }
+    
+        aclnnPermute(workspaceAddr, workspaceSize, executor, GetFastllmAclStream());
+    
+        // 5. 同步
+        aclrtSynchronizeStream(GetFastllmAclStream());
+    
+        // 6. 结果回拷 (Overwrite Original Data)
+        // 将排好序的数据拷回 mutableInput 的显存地址
+        aclrtMemcpy(mutableInput.deviceData, dataBytes, tempPtr, dataBytes, ACL_MEMCPY_DEVICE_TO_DEVICE);
+        
+        // 更新 Data 对象的维度信息
+        mutableInput.Resize(tempOutData.dims);
+    
+        // 7. 资源释放
+        aclDestroyTensor(tSelf);
+        aclDestroyTensor(tOut);
+        aclDestroyIntArray(permArray);
+        FastllmAclFree(tempPtr); // 释放临时显存
+    }
+
+    void FastllmAclNearlyRotatePosition2D(const Data &data, const Data &positionIds, const Data &sinData, const Data &cosData, int rotaryDim) {
+        // 1. 构造 Tensor
+        // input (data) 既是输入也是输出 (In-Place)
+        // 根据你的范例，x, cos, sin 都是 Tensor
+        aclTensor *tX = CreateAclTensor(data, data.dims);
+        aclTensor *tCos = CreateAclTensor(cosData, cosData.dims);
+        aclTensor *tSin = CreateAclTensor(sinData, sinData.dims);
+        
+        // 构造 Output Tensor (复用 tX 实现原地修改)
+        // 注意：aclnnRotaryPositionEmbedding 接口要求有一个明确的 out 参数
+        // 如果想要原地修改，只需将 out 指向 data 即可
+        // 为了稳妥，我们可以单独创建一个 tOut 指向 data 的内存，或者直接传 tX
+        // 这里我们直接传 tX 作为 out
+        
+        // 2. 准备 mode 参数
+        // 根据文档/范例，mode=1 通常表示标准的旋转方式
+        int64_t mode = 0;
+    
+        // 3. 获取 Workspace 大小
+        uint64_t workspaceSize = 0;
+        aclOpExecutor *executor = nullptr;
+    
+        // 接口签名: x, cos, sin, mode, out, workspace, executor
+        aclnnRotaryPositionEmbeddingGetWorkspaceSize(tX, tCos, tSin, mode, tX, &workspaceSize, &executor);
+    
+        // 4. 申请 Workspace 并执行
+        void *workspaceAddr = nullptr;
+        if (workspaceSize > 0) {
+            workspaceAddr = g_workspace.Get(workspaceSize);
+        }
+    
+        aclnnRotaryPositionEmbedding(workspaceAddr, workspaceSize, executor, GetFastllmAclStream());
+    
+        // 5. 同步
+        aclrtSynchronizeStream(GetFastllmAclStream());
+    
+        // 6. 资源释放
+        aclDestroyTensor(tX);
+        aclDestroyTensor(tCos);
+        aclDestroyTensor(tSin);
+        // tOut 就是 tX，不需要重复释放
     }
 
 }
