@@ -3516,7 +3516,7 @@ CMakeFiles/test_npu.dir/home/HwHiAiUser/fastllm-master/src/devices/npu/fastllm-a
  /usr/local/Ascend/ascend-toolkit/latest/include/aclnnop/aclnn_util.h
  /usr/local/Ascend/ascend-toolkit/latest/include/aclnnop/aclnn_mul.h
  /usr/local/Ascend/ascend-toolkit/latest/include/aclnnop/aclnn_permute.h
- /usr/local/Ascend/ascend-toolkit/latest/include/aclnnop/aclnn_rotary_position_embedding.h
+ /usr/local/Ascend/ascend-toolkit/latest/include/aclnnop/aclnn_apply_rotary_pos_emb_v2.h
  /usr/local/Ascend/ascend-toolkit/latest/include/aclnnop/aclnn_quant_matmul_dequant.h
  /usr/local/Ascend/ascend-toolkit/latest/include/aclnnop/aclnn_softmax.h
  /usr/local/Ascend/ascend-toolkit/latest/include/aclnnop/aclnn_rms_norm.h

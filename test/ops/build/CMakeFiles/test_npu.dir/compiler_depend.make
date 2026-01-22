@@ -3505,7 +3505,7 @@ CMakeFiles/test_npu.dir/home/HwHiAiUser/fastllm-master/src/devices/npu/fastllm-a
   /usr/local/Ascend/ascend-toolkit/latest/include/aclnnop/aclnn_util.h \
   /usr/local/Ascend/ascend-toolkit/latest/include/aclnnop/aclnn_mul.h \
   /usr/local/Ascend/ascend-toolkit/latest/include/aclnnop/aclnn_permute.h \
-  /usr/local/Ascend/ascend-toolkit/latest/include/aclnnop/aclnn_rotary_position_embedding.h \
+  /usr/local/Ascend/ascend-toolkit/latest/include/aclnnop/aclnn_apply_rotary_pos_emb_v2.h \
   /usr/local/Ascend/ascend-toolkit/latest/include/aclnnop/aclnn_quant_matmul_dequant.h \
   /usr/local/Ascend/ascend-toolkit/latest/include/aclnnop/aclnn_softmax.h \
   /usr/local/Ascend/ascend-toolkit/latest/include/aclnnop/aclnn_rms_norm.h \
@@ -7087,6 +7087,8 @@ CMakeFiles/test_npu.dir/test_npu.cpp.o: ../test_npu.cpp \
 
 /usr/local/Ascend/ascend-toolkit/latest/include/aclnnop/aclnn_quant_matmul_dequant.h:
 
+/usr/local/Ascend/ascend-toolkit/latest/include/aclnnop/aclnn_apply_rotary_pos_emb_v2.h:
+
 /usr/local/Ascend/ascend-toolkit/latest/include/aclnnop/aclnn_permute.h:
 
 /usr/local/Ascend/ascend-toolkit/latest/include/aclnnop/aclnn_mul.h:
@@ -7868,8 +7870,6 @@ CMakeFiles/test_npu.dir/test_npu.cpp.o: ../test_npu.cpp \
 /usr/lib/gcc/aarch64-linux-gnu/11/include/stdarg.h:
 
 /usr/include/aarch64-linux-gnu/c++/11/bits/ctype_inline.h:
-
-/usr/local/Ascend/ascend-toolkit/latest/include/aclnnop/aclnn_rotary_position_embedding.h:
 
 /usr/lib/gcc/aarch64-linux-gnu/11/include/arm_neon.h:
 
