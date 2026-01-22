@@ -3,10 +3,10 @@
 //
 
 #include "devices/cpu/cpudevice.h"
-#include "devices/npu/ascenddevice.h" // 修正：路径通常是 devices/npu 而不是 nou
+#include "devices/npu/ascenddevice.h" 
 #include "devices/npu/fastllm-ascend.h"
 #include "utils.h"
-#include <algorithm> // for std::max, std::min
+#include <algorithm>
 
 namespace fastllm {
 
@@ -52,6 +52,7 @@ namespace fastllm {
         this->ops["AttentionMask"] = (BaseOperator*)(new NpuAttentionMaskOp());
         // 注册 RoPE 算子 (LlamaRotatePosition2D 是 DeepSeek 用的名字)
         this->ops["NearlyRotatePosition2D"] = (BaseOperator*)(new NpuNearlyRotatePosition2DOp());
+        this->ops["NearlyRotatePosition2D_Fused"] = (BaseOperator*)(new NpuNearlyRotatePosition2DFusedOp());
         
         // 初始化 ACL
         FastllmAclInit();
@@ -573,8 +574,20 @@ namespace fastllm {
         Data &sinData = *(datas.find("sin")->second);
         Data &cosData = *(datas.find("cos")->second);
         int rotaryDim = intParams.find("rotaryDim") != intParams.end() ? intParams.find("rotaryDim")->second : 128;
-        // 修正拼写: FastllmAclNearlyRotatePosition2D
         FastllmAclNearlyRotatePosition2D(data, positionIds, sinData, cosData, rotaryDim);
     }
 
-} // namespace fastllm
+    void NpuNearlyRotatePosition2DFusedOp::Run(const std::string &opType, const DataDict &datas, const FloatDict &floatParams, const IntDict &intParams) {
+        Data &query = *(datas.find("query")->second);
+        Data &key = *(datas.find("key")->second);
+        
+        Data &positionIds = *(datas.find("positionIds")->second);
+        Data &sinData = *(datas.find("sin")->second);
+        Data &cosData = *(datas.find("cos")->second);
+
+        int rotaryDim = intParams.find("rotaryDim") != intParams.end() ? intParams.find("rotaryDim")->second : 128;
+
+        FastllmAclRotatePosition2D_Fused(query, key, positionIds, sinData, cosData, rotaryDim);
+    }
+
+}

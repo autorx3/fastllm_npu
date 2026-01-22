@@ -577,6 +577,66 @@ void Test_RoPE() {
     FastllmAclFree(npuData.deviceData); FastllmAclFree(npuSin.deviceData); FastllmAclFree(npuCos.deviceData);
 }
 
+void Test_RoPE_Dual_Version() {
+    std::cout << "=== Testing RoPE (Dual Version) ===";
+    std::vector<int> dims = {1, 1, 1, 64}; // 简化维度
+    int dim = 64;
+
+    // 1. 准备数据
+    Data q, k, sinData, cosData, dummyPos;
+    q.dataType = DataType::FLOAT32; q.Resize(dims); FillRandom(q);
+    k.dataType = DataType::FLOAT32; k.Resize(dims); FillRandom(k);
+    sinData.dataType = DataType::FLOAT32; sinData.Resize(dims); FillRandom(sinData);
+    cosData.dataType = DataType::FLOAT32; cosData.Resize(dims); FillRandom(cosData);
+
+    // 2. 准备 NPU 数据 (Q1/K1用于单输入测试, Q2/K2用于双输入测试)
+    Data npuQ1, npuK1, npuQ2, npuK2, npuSin, npuCos;
+    // 拷贝辅助函数略，假设已拷贝...
+    // 这里简写逻辑:
+    npuQ1.Resize(dims); npuQ1.deviceData = FastllmAclMalloc(q.GetBytes()); FastllmAclCopyFromHostToDevice(npuQ1.deviceData, q.cpuData, q.GetBytes());
+    npuK1.Resize(dims); npuK1.deviceData = FastllmAclMalloc(k.GetBytes()); FastllmAclCopyFromHostToDevice(npuK1.deviceData, k.cpuData, k.GetBytes());
+    
+    npuQ2.Resize(dims); npuQ2.deviceData = FastllmAclMalloc(q.GetBytes()); FastllmAclCopyFromHostToDevice(npuQ2.deviceData, q.cpuData, q.GetBytes());
+    npuK2.Resize(dims); npuK2.deviceData = FastllmAclMalloc(k.GetBytes()); FastllmAclCopyFromHostToDevice(npuK2.deviceData, k.cpuData, k.GetBytes());
+
+    npuSin.Resize(dims); npuSin.deviceData = FastllmAclMalloc(sinData.GetBytes()); FastllmAclCopyFromHostToDevice(npuSin.deviceData, sinData.cpuData, sinData.GetBytes());
+    npuCos.Resize(dims); npuCos.deviceData = FastllmAclMalloc(cosData.GetBytes()); FastllmAclCopyFromHostToDevice(npuCos.deviceData, cosData.cpuData, cosData.GetBytes());
+
+    // -------------------------------------------------
+    // 测试 1: 单输入版 (Legacy) - 需要调用两次
+    // -------------------------------------------------
+    // 旋转 Q
+    FastllmAclNearlyRotatePosition2D(npuQ1, dummyPos, npuSin, npuCos, dim);
+    // 旋转 K
+    FastllmAclNearlyRotatePosition2D(npuK1, dummyPos, npuSin, npuCos, dim);
+
+    // -------------------------------------------------
+    // 测试 2: 双输入版 (Fused) - 调用一次
+    // -------------------------------------------------
+    FastllmAclRotatePosition2D_Fused(npuQ2, npuK2, dummyPos, npuSin, npuCos, dim);
+
+    // -------------------------------------------------
+    // 结果对比
+    // -------------------------------------------------
+    // 理论上 npuQ1 应该等于 npuQ2，npuK1 应该等于 npuK2
+    Data resQ1, resK1, resQ2, resK2;
+    resQ1.Resize(dims); resQ1.Allocate(); FastllmAclCopyFromDeviceToHost(resQ1.cpuData, npuQ1.deviceData, resQ1.GetBytes());
+    resK1.Resize(dims); resK1.Allocate(); FastllmAclCopyFromDeviceToHost(resK1.cpuData, npuK1.deviceData, resK1.GetBytes());
+    resQ2.Resize(dims); resQ2.Allocate(); FastllmAclCopyFromDeviceToHost(resQ2.cpuData, npuQ2.deviceData, resQ2.GetBytes());
+    resK2.Resize(dims); resK2.Allocate(); FastllmAclCopyFromDeviceToHost(resK2.cpuData, npuK2.deviceData, resK2.GetBytes());
+
+    std::cout << "Check Q (Single vs Fused): ";
+    CompareData(resQ1, resQ2, 1e-5); // 应该几乎完全一致
+
+    std::cout << "Check K (Single vs Fused): ";
+    CompareData(resK1, resK2, 1e-5); // 应该几乎完全一致
+    
+    // 释放内存...
+    FastllmAclFree(npuQ1.deviceData); FastllmAclFree(npuK1.deviceData);
+    FastllmAclFree(npuQ2.deviceData); FastllmAclFree(npuK2.deviceData);
+    FastllmAclFree(npuSin.deviceData); FastllmAclFree(npuCos.deviceData);
+}
+
 int main() {
     std::cout << "Initializing NPU..." << std::endl;
     FastllmAclInit();
@@ -589,7 +649,7 @@ int main() {
     Test_Mul_Scalar();
     Test_MulTo();
     Test_Permute();
-    Test_RoPE();
+    Test_RoPE_Dual_Version();
 
     std::cout << "All tests finished." << std::endl;
     return 0;

@@ -152,6 +152,9 @@ namespace fastllm {
     class NpuNearlyRotatePosition2DOp : public BaseOperator {
         void Run(const std::string &opType, const DataDict &datas, const FloatDict &floatParams, const IntDict &intParams);
     };
+    class NpuNearlyRotatePosition2DFusedOp : public BaseOperator {
+        void Run(const std::string &opType, const DataDict &datas, const FloatDict &floatParams, const IntDict &intParams);
+    };
 
 } // namespace fastllm
 

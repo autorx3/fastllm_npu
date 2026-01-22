@@ -77,7 +77,7 @@
      void FastllmAclAttention(const fastllm::Data &q, const fastllm::Data &k, const fastllm::Data &v, const fastllm::Data &mask, fastllm::Data &output, int group, float scale, int maskType);
      void FastllmAclAttentionMask(const fastllm::Data &input, const fastllm::Data &mask, float maskValue);
      void FastllmAclNearlyRotatePosition2D(const fastllm::Data &data, const fastllm::Data &positionIds, const fastllm::Data &sinData, const fastllm::Data &cosData, int rotaryDim);
- 
+     void FastllmAclRotatePosition2D_Fused(const Data &query, const Data &key, const Data &positionIds, const Data &sinData, const Data &cosData, int rotaryDim);
  } // namespace fastllm
  
  #endif // FASTLLM_ASCEND_H
