@@ -194,8 +194,8 @@ int main() {
     std::cout << "Initializing NPU..." << std::endl;
     FastllmAclInit();
 
-    Test_SwiGLU();
     Test_Softmax();
+    Test_SwiGLU();
 
     std::cout << "All tests finished." << std::endl;
     return 0;

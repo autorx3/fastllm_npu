@@ -118,5 +118,5 @@ set(CMAKE_MAKEFILE_PRODUCTS
 
 # Dependency information for all targets:
 set(CMAKE_DEPEND_INFO_FILES
-  "CMakeFiles/test_npu.dir/DependInfo.cmake"
+  "CMakeFiles/test_npu_eb_repeat.dir/DependInfo.cmake"
   )

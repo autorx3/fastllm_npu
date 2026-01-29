@@ -63,7 +63,7 @@ CMAKE_BINARY_DIR = /home/HwHiAiUser/fastllm-master/test/ops/build
 # Directory level rules for the build root directory
 
 # The main recursive "all" target.
-all: CMakeFiles/test_npu.dir/all
+all: CMakeFiles/test_npu_eb_repeat.dir/all
 .PHONY : all
 
 # The main recursive "preinstall" target.
@@ -71,34 +71,34 @@ preinstall:
 .PHONY : preinstall
 
 # The main recursive "clean" target.
-clean: CMakeFiles/test_npu.dir/clean
+clean: CMakeFiles/test_npu_eb_repeat.dir/clean
 .PHONY : clean
 
 #=============================================================================
-# Target rules for target CMakeFiles/test_npu.dir
+# Target rules for target CMakeFiles/test_npu_eb_repeat.dir
 
 # All Build rule for target.
-CMakeFiles/test_npu.dir/all:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_npu.dir/build.make CMakeFiles/test_npu.dir/depend
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_npu.dir/build.make CMakeFiles/test_npu.dir/build
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir=/home/HwHiAiUser/fastllm-master/test/ops/build/CMakeFiles --progress-num=1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23 "Built target test_npu"
-.PHONY : CMakeFiles/test_npu.dir/all
+CMakeFiles/test_npu_eb_repeat.dir/all:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_npu_eb_repeat.dir/build.make CMakeFiles/test_npu_eb_repeat.dir/depend
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_npu_eb_repeat.dir/build.make CMakeFiles/test_npu_eb_repeat.dir/build
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir=/home/HwHiAiUser/fastllm-master/test/ops/build/CMakeFiles --progress-num=1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23 "Built target test_npu_eb_repeat"
+.PHONY : CMakeFiles/test_npu_eb_repeat.dir/all
 
 # Build rule for subdir invocation for target.
-CMakeFiles/test_npu.dir/rule: cmake_check_build_system
+CMakeFiles/test_npu_eb_repeat.dir/rule: cmake_check_build_system
 	$(CMAKE_COMMAND) -E cmake_progress_start /home/HwHiAiUser/fastllm-master/test/ops/build/CMakeFiles 23
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 CMakeFiles/test_npu.dir/all
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 CMakeFiles/test_npu_eb_repeat.dir/all
 	$(CMAKE_COMMAND) -E cmake_progress_start /home/HwHiAiUser/fastllm-master/test/ops/build/CMakeFiles 0
-.PHONY : CMakeFiles/test_npu.dir/rule
+.PHONY : CMakeFiles/test_npu_eb_repeat.dir/rule
 
 # Convenience name for target.
-test_npu: CMakeFiles/test_npu.dir/rule
-.PHONY : test_npu
+test_npu_eb_repeat: CMakeFiles/test_npu_eb_repeat.dir/rule
+.PHONY : test_npu_eb_repeat
 
 # clean rule for target.
-CMakeFiles/test_npu.dir/clean:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_npu.dir/build.make CMakeFiles/test_npu.dir/clean
-.PHONY : CMakeFiles/test_npu.dir/clean
+CMakeFiles/test_npu_eb_repeat.dir/clean:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_npu_eb_repeat.dir/build.make CMakeFiles/test_npu_eb_repeat.dir/clean
+.PHONY : CMakeFiles/test_npu_eb_repeat.dir/clean
 
 #=============================================================================
 # Special targets to cleanup operation of make.

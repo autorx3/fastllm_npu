@@ -32,47 +32,76 @@ namespace fastllm {
     static bool g_isInitialized = false;
 
     struct NpuWorkspace {
-        void* ptr = nullptr;
-        size_t capacity = 0;
+        void* basePtr = nullptr;      
+        size_t capacity = 0;          
+        size_t currentOffset = 0;     
         std::mutex mtx; 
+
+        // 默认预分配大小：256MB
+        const size_t DEFAULT_POOL_SIZE = 256 * 1024 * 1024; 
+
+        // 【关键修改】构造函数什么都不做，避免在 aclInit 前调用 aclrtMalloc
+        NpuWorkspace() {}
 
         void* Get(size_t size) {
             std::lock_guard<std::mutex> lock(mtx);
-            size = (size + 31) / 32 * 32;
-            if (size > capacity) {
-                if (ptr) aclrtFree(ptr);
-                size_t alloc_size = (size_t)(size * 1.2); 
-                auto ret = aclrtMalloc(&ptr, alloc_size, ACL_MEM_MALLOC_HUGE_FIRST);
+            
+            // 1. 延迟初始化：第一次被调用时才申请内存
+            // 此时 main 函数肯定已经运行，aclInit 肯定已经完成了
+            if (basePtr == nullptr) {
+                aclError ret = aclrtMalloc(&basePtr, DEFAULT_POOL_SIZE, ACL_MEM_MALLOC_HUGE_FIRST);
                 if (ret != ACL_SUCCESS) {
-                    printf("NPU Workspace Malloc Failed! Size: %zu\n", alloc_size);
+                    printf("CRITICAL ERROR: NpuWorkspace init failed. Code: %d\n", ret);
                     return nullptr;
                 }
-                capacity = alloc_size;
+                capacity = DEFAULT_POOL_SIZE;
+                // printf("NpuWorkspace Initialized: %zu MB\n", capacity / 1024 / 1024);
             }
+
+            // 2. 32字节对齐
+            size_t alignSize = (size + 31) / 32 * 32;
+
+            // 3. 检查剩余空间与扩容
+            if (currentOffset + alignSize > capacity) {
+                printf("WARNING: NpuWorkspace expanding! Old: %zu MB, Needed: %zu MB\n", 
+                       capacity/1024/1024, (currentOffset + alignSize)/1024/1024);
+                
+                    if (currentOffset == 0 && basePtr) {
+                        aclrtFree(basePtr);
+                        basePtr = nullptr;
+                    } else {
+                        // 如果 currentOffset > 0 且需要扩容，说明当前函数正在使用旧内存块
+                        // 这是一个逻辑死锁。建议在这里直接报 Error，提示增加初始 Pool 大小。
+                        printf("CRITICAL ERROR: Workspace out of memory during a single operator call!\n");
+                    }
+                
+                size_t newCapacity = std::max(capacity * 2, currentOffset + alignSize + 64 * 1024 * 1024);
+                aclError ret = aclrtMalloc(&basePtr, newCapacity, ACL_MEM_MALLOC_HUGE_FIRST);
+                if (ret != ACL_SUCCESS) {
+                    printf("CRITICAL ERROR: NpuWorkspace Expand Failed!\n");
+                    return nullptr;
+                }
+                capacity = newCapacity;
+                currentOffset = 0; 
+            }
+
+            // 4. 返回地址
+            void* ptr = (uint8_t*)basePtr + currentOffset;
+            currentOffset += alignSize;
+            
             return ptr;
         }
 
-        ~NpuWorkspace() { if (ptr) aclrtFree(ptr); }
+        void Reset() {
+            std::lock_guard<std::mutex> lock(mtx);
+            currentOffset = 0;
+        }
+
+        ~NpuWorkspace() {
+            if (basePtr) aclrtFree(basePtr);
+        }
     } g_workspace;
 
-    struct DeviceScalar {
-        void* ptr = nullptr;
-        aclTensorDesc* desc = nullptr;
-        aclDataBuffer* buf = nullptr;
-
-        DeviceScalar(float val) {
-            aclrtMalloc(&ptr, sizeof(float), ACL_MEM_MALLOC_HUGE_FIRST);
-            aclrtMemcpy(ptr, sizeof(float), &val, sizeof(float), ACL_MEMCPY_HOST_TO_DEVICE);
-            std::vector<int64_t> dims = {1};
-            desc = aclCreateTensorDesc(ACL_FLOAT, 1, dims.data(), ACL_FORMAT_ND);
-            buf = aclCreateDataBuffer(ptr, sizeof(float));
-        }
-        ~DeviceScalar() {
-            if (desc) aclDestroyTensorDesc(desc);
-            if (buf) aclDestroyDataBuffer(buf);
-            if (ptr) aclrtFree(ptr);
-        }
-    };
 
     aclrtStream GetFastllmAclStream() { return g_aclStream; }
 
@@ -100,6 +129,10 @@ namespace fastllm {
 
         g_isInitialized = true;
         printf("Fastllm Ascend Init Success on Device %d! Stream Created.\n", deviceId);
+    }
+
+    void FastllmAclClearWorkspace() {
+        g_workspace.Reset();
     }
 
 
@@ -260,6 +293,7 @@ namespace fastllm {
         size_t rstdBytes = numElem * sizeof(float); 
 
         void *rstdPtr = g_workspace.Get(rstdBytes);
+        printf("DEBUG: rstdPtr = %p\n", rstdPtr); // 打印地址
 
         std::vector<int64_t> rstdStrides(rstdDims.size());
         int64_t stride = 1;
@@ -278,6 +312,9 @@ namespace fastllm {
         void *opWorkspaceAddr = nullptr;
         if (opWorkspaceSize > 0) {
             opWorkspaceAddr = g_workspace.Get(opWorkspaceSize);
+                printf("DEBUG: opWorkspaceAddr = %p (Size: %lu)\n", opWorkspaceAddr, opWorkspaceSize); // 打印地址
+        } else {
+            printf("DEBUG: opWorkspaceSize is 0, lucky pass!\n");
         }
 
         aclnnRmsNorm(opWorkspaceAddr, opWorkspaceSize, executor, GetFastllmAclStream());
@@ -323,21 +360,59 @@ namespace fastllm {
     //待测试
     void FastllmAclEmbedding(const Data &input, const Data &weight, Data &output) {
         aclTensor *tW = CreateAclTensor(weight, weight.dims);
-        aclTensor *tI = CreateAclTensor(input, input.dims);
         aclTensor *tO = CreateAclTensor(output, output.dims);
+
+        int64_t elemCount = input.Count(0);
+        size_t intBytes = (elemCount * sizeof(int64_t) + 255) / 256 * 256; // 256对齐
+
+        size_t maxOpWs = 8 * 1024 * 1024; 
+
+        uint8_t *basePtr = (uint8_t*)g_workspace.Get(intBytes + maxOpWs);
+        
+        void *tempIntData = basePtr;
+        void *opWsAddr    = basePtr + intBytes;
+
+        aclTensor *tI = nullptr;
+
+        if (input.dataType == DataType::FLOAT32) {
+            // === Cast Float -> Int64 ===
+            aclTensor *tI_Float = CreateAclTensor(input, input.dims);
+
+            std::vector<int64_t> dims; for(auto d : input.dims) dims.push_back(d);
+            std::vector<int64_t> strides(dims.size(), 1);
+            for(int i=dims.size()-2; i>=0; i--) strides[i] = dims[i+1] * strides[i+1];
+            
+            aclTensor *tI_Int64 = aclCreateTensor(dims.data(), dims.size(), ACL_INT64, 
+                                                strides.data(), 0, ACL_FORMAT_ND, 
+                                                dims.data(), dims.size(), tempIntData);
+
+            uint64_t ws = 0; aclOpExecutor *ex = nullptr;
+            if (aclnnCastGetWorkspaceSize(tI_Float, ACL_INT64, tI_Int64, &ws, &ex) == ACL_SUCCESS) {
+                if (ws > maxOpWs) printf("Warning: Cast WS need %lu\n", ws);
+                aclnnCast(opWsAddr, ws, ex, GetFastllmAclStream());
+            }
+            aclDestroyTensor(tI_Float);
+            tI = tI_Int64;
+        } else {
+            tI = CreateAclTensor(input, input.dims);
+        }
+
         uint64_t ws = 0; aclOpExecutor *ex = nullptr;
         if (aclnnEmbeddingGetWorkspaceSize(tW, tI, tO, &ws, &ex) == ACL_SUCCESS) {
-            aclnnEmbedding(g_workspace.Get(ws), ws, ex, GetFastllmAclStream());
+            if (ws > maxOpWs) printf("Warning: Embedding WS need %lu\n", ws);
+            aclnnEmbedding(opWsAddr, ws, ex, GetFastllmAclStream());
         }
+
         aclDestroyTensor(tW); aclDestroyTensor(tI); aclDestroyTensor(tO);
     }
 
-    //性能优化版
+    
     void FastllmAclTopK(const Data &input, Data &output, int topk) {
         int64_t k = topk;
         int64_t dim = input.dims.size() - 1; 
 
-        std::vector<int64_t> tempDims = input.dims;
+        std::vector<int64_t> tempDims;
+        for (auto d : input.dims) tempDims.push_back((int64_t)d);
         tempDims[dim] = k;
 
         std::vector<int64_t> tempStrides(tempDims.size(), 1);
@@ -406,9 +481,12 @@ namespace fastllm {
         }
 
         aclDestroyTensor(tInput); aclDestroyTensor(tOutput); 
-        aclDestroyTensor(tValues); aclDestroyTensor(tIndices); aclDestroyTensor(tIndicesCast);
-        aclDestroyTensorList(tensorList);
+        //aclDestroyTensor(tValues); 
+        aclDestroyTensor(tIndices); 
+        //aclDestroyTensor(tIndicesCast);
+        aclDestroyTensorList(tensorList); //对于aclTensorList内的aclTensor不需要重复释放。
     }
+
 
     void FastllmAclFloatToHalf(float *src, void *dst, int len) {
         std::vector<int> dims = {len};
