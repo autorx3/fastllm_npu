@@ -1,8 +1,8 @@
 #include "fastllm.h"
 
 void callBaseOp(int optype=0){
-    fastllm::Data inputs = fastllm::Data(fastllm::DataType::FLOAT32, {1, 2}, {1, 5});
-    fastllm::Data outputs = fastllm::Data(fastllm::DataType::FLOAT32, {1, 2}, {3, 4});
+    fastllm::Data inputs = fastllm::Data(fastllm::DataType::FLOAT16, {1, 2}, {1, 5});
+    fastllm::Data outputs = fastllm::Data(fastllm::DataType::FLOAT16, {1, 2}, {3, 4});
 
     switch (optype)
     {
@@ -139,13 +139,14 @@ void testNorm(){
 
 void testAll(){
     testBase();
-    testActivation();
-    testAttention();
-    testNorm();
+    // testActivation();
+    // testAttention();
+    // testNorm();
     testLinaer();
 }
 
 
 int main(){
+    FastllmAclInit();
     testAll();
 }

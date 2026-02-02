@@ -1,0 +1,3 @@
+/home/HwHiAiUser/fastllm-master/test/ascend_one/build/CMakeFiles/cppOps.dir
+/home/HwHiAiUser/fastllm-master/test/ascend_one/build/CMakeFiles/edit_cache.dir
+/home/HwHiAiUser/fastllm-master/test/ascend_one/build/CMakeFiles/rebuild_cache.dir

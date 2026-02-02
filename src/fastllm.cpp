@@ -30,6 +30,10 @@
 #include "immintrin.h"
 #endif
 
+#ifdef USE_ASCEND
+#include "fastllm-ascend.h"
+#endif
+
 #ifdef USE_CUDA
 #include "fastllm-cuda.cuh"
 #endif
@@ -458,12 +462,49 @@ namespace fastllm {
         }
     }
 
+    // Data::Data(fastllm::DataType type, const std::vector<int> &dims, const std::vector<float> &data) : Data::Data(type, dims) {
+    //     // std::cout<<"调用数值构造"<<std::endl;
+    //     this->Allocate();
+    //     if (type == DataType::FLOAT32) {
+    //         std::memcpy(this->cpuData, data.data(), this->GetBytes());
+    //     } else if (type == DataType::FLOAT16) {
+    //         // cpuData 里放的是 fp16，长度是 Count(0)
+    //         uint16_t *dst = (uint16_t*)this->cpuData;
+    //         for (int i = 0; i < this->Count(0); i++) {
+    //             dst[i] = FloatToFp16Bits(data[i]); // 关键：float->fp16
+    //         }
+    //     } else if (type == DataType::BFLOAT16) {
+    //         uint16_t *dst = (uint16_t*)this->cpuData;
+    //         for (int i = 0; i < this->Count(0); i++) {
+    //             dst[i] = FloatToBf16Bits(data[i]);
+    //         }
+    //     }
+    // }
+
     Data::Data(fastllm::DataType type, const std::vector<int> &dims, const std::vector<float> &data) : Data::Data(type, dims) {
-        // std::cout<<"调用数值构造"<<std::endl;
         this->Allocate();
-        if (type == DataType::FLOAT32) {
-            std::memcpy(this->cpuData, data.data(), this->GetBytes());
+        const int64_t n = this->Count(0);
+
+        if ((int64_t)data.size() != n) {
+            ErrorInFastLLM("Data ctor init size mismatch: data.size != Count(0)\n");
+            return;
         }
+
+        if (type == DataType::FLOAT32) {
+            // data 是 float，目标也是 float
+            std::memcpy(this->cpuData, data.data(), this->GetBytes());
+            return;
+        }
+
+        if (type == DataType::FLOAT16) {
+            // data 是 float，目标是 fp16 bits (2 bytes each)
+            uint16_t *dst = reinterpret_cast<uint16_t*>(this->cpuData);
+            for (int64_t i = 0; i < n; i++) {
+                dst[i] = float_to_half(data[(size_t)i]); // 关键：float->fp16 bits
+            }
+            return;
+        }
+
     }
 
     Data::Data(const Data &ori) {
@@ -1535,87 +1576,254 @@ namespace fastllm {
         } 
     }
 
+    // void Data::ToDevice(void *device) {
+    //     BaseDevice *dev = (BaseDevice*)device;
+    //     if (dev->deviceType == "cuda" || dev->deviceType == "multicuda") {
+    //         this->ToDevice(DataDevice::CUDA, dev->deviceIds);
+    //     } else {
+    //         this->ToDevice(DataDevice::CPU, dev->deviceIds);
+    //     }
+    // }
     void Data::ToDevice(void *device) {
         BaseDevice *dev = (BaseDevice*)device;
         if (dev->deviceType == "cuda" || dev->deviceType == "multicuda") {
             this->ToDevice(DataDevice::CUDA, dev->deviceIds);
+        } else if (dev->deviceType == "ascend" || dev->deviceType == "npu") {
+            this->ToDevice(DataDevice::ASCEND, dev->deviceIds);
         } else {
             this->ToDevice(DataDevice::CPU, dev->deviceIds);
         }
     }
 
+    // void Data::ToDevice(fastllm::DataDevice device) {
+    //     if (device == DataDevice::CUDA) {
+    //         ToDevice(device, curExecutor->GetDeviceIds("cuda"));
+    //     } else {
+    //         ToDevice(device, {0});
+    //     }
+    // }
+
     void Data::ToDevice(fastllm::DataDevice device) {
         if (device == DataDevice::CUDA) {
             ToDevice(device, curExecutor->GetDeviceIds("cuda"));
+        } else if (device == DataDevice::ASCEND) {
+    #ifdef USE_ASCEND
+            // 如果 executor 没有 "ascend"，先用 {0}
+            ToDevice(device, {0});
+    #else
+            ErrorInFastLLM("ASCEND not enabled.\n");
+    #endif
         } else {
             ToDevice(device, {0});
         }
     }
 
-    void Data::ToDevice(fastllm::DataDevice device, const std::vector <int> &deviceIds) {
+//     void Data::ToDevice(fastllm::DataDevice device, const std::vector <int> &deviceIds) {
+//         // TODO: 同一个Weight切分到不同 Device 上
+//         // NOTICE: 目前还不支持，暂时只切到deviceIds[0]上
+
+//         if (this->dataType == DataType::INT32PARAM) {
+//             return;
+//         }
+// #ifndef USE_CUDA
+//         // TODO: 这里先直接跳过了
+//         return;
+// #endif
+//         if (this->dataDevice == device &&
+//             (this->dataDevice == DataDevice::CPU || deviceIds.size() == 0 || this->dataDeviceIds == deviceIds)) {
+//             return;
+//         }
+
+//         if (this->expansionBytes != 0) {
+// #ifdef USE_CUDA
+//             if (this->dataDevice == DataDevice::CPU) {
+//                 if (device == DataDevice::CUDA) {
+//                     uint8_t *cpuData = this->cpuData;
+// #ifdef USE_MMAP
+//                     cpuData = new uint8_t[expansionBytes];
+//                     memcpy(cpuData, this->cpuData, expansionBytes);
+// #endif
+//                     // FastllmCudaSetDevice(deviceIds.size() == 0 ? 0 : deviceIds[0]);
+//                     this->cudaData = FastllmCudaMalloc(expansionBytes);
+//                     FastllmCudaCopyFromHostToDevice(this->cudaData, cpuData, expansionBytes);
+// #ifdef USE_MMAP
+//                     delete[] cpuData;
+// #else
+//                     delete[] this->cpuData;
+//                     this->cpuData = nullptr;
+// #endif
+//                 }
+//             } else if (this->dataDevice == DataDevice::CUDA) {
+//                 if (device == DataDevice::CPU) {
+//                     this->cpuData = new uint8_t[expansionBytes];
+//                     FastllmCudaCopyFromDeviceToHost(this->cpuData, this->cudaData, expansionBytes);
+//                     FastllmCudaFree(this->cudaData);
+//                     this->cudaData = nullptr;
+//                 } else if (device == DataDevice::CUDA) {
+//                     int sourceDevice = this->dataDeviceIds.size() == 0 ? 0 : this->dataDeviceIds[0];
+//                     int destDevice = deviceIds.size() == 0 ? 0 : deviceIds[0];
+//                     if (sourceDevice != destDevice) {
+//                                         FastllmCudaSetDevice(destDevice);
+//                                         void *newCudaData = FastllmCudaMalloc(expansionBytes);
+//                                         FastllmCudaMemcpyBetweenDevices(destDevice, newCudaData, sourceDevice, this->cudaData, expansionBytes);
+//                                         FastllmCudaSetDevice(sourceDevice);
+//                                         FastllmCudaFree(this->cudaData);
+//                                         this->cudaData = newCudaData;
+//                                         FastllmCudaSetDevice(destDevice);
+//                     }
+//                 }
+//             }
+// #endif
+//         }
+//         if (deviceIds.size() == 0) {
+//             this->dataDeviceIds = {0};
+//         } else {
+//             this->dataDeviceIds = deviceIds;
+//         };
+//         this->dataDevice = device;
+//     }
+
+    void Data::ToDevice(fastllm::DataDevice device, const std::vector<int> &deviceIds) {
         // TODO: 同一个Weight切分到不同 Device 上
         // NOTICE: 目前还不支持，暂时只切到deviceIds[0]上
 
         if (this->dataType == DataType::INT32PARAM) {
             return;
         }
-#ifndef USE_CUDA
-        // TODO: 这里先直接跳过了
-        return;
-#endif
+
+        // already on target device
         if (this->dataDevice == device &&
             (this->dataDevice == DataDevice::CPU || deviceIds.size() == 0 || this->dataDeviceIds == deviceIds)) {
             return;
         }
 
-        if (this->expansionBytes != 0) {
-#ifdef USE_CUDA
-            if (this->dataDevice == DataDevice::CPU) {
-                if (device == DataDevice::CUDA) {
-                    uint8_t *cpuData = this->cpuData;
-#ifdef USE_MMAP
-                    cpuData = new uint8_t[expansionBytes];
-                    memcpy(cpuData, this->cpuData, expansionBytes);
-#endif
-                    // FastllmCudaSetDevice(deviceIds.size() == 0 ? 0 : deviceIds[0]);
-                    this->cudaData = FastllmCudaMalloc(expansionBytes);
-                    FastllmCudaCopyFromHostToDevice(this->cudaData, cpuData, expansionBytes);
-#ifdef USE_MMAP
-                    delete[] cpuData;
-#else
-                    delete[] this->cpuData;
-                    this->cpuData = nullptr;
-#endif
-                }
-            } else if (this->dataDevice == DataDevice::CUDA) {
-                if (device == DataDevice::CPU) {
-                    this->cpuData = new uint8_t[expansionBytes];
-                    FastllmCudaCopyFromDeviceToHost(this->cpuData, this->cudaData, expansionBytes);
+        // no data buffer case
+        if (this->expansionBytes == 0) {
+            this->dataDeviceIds = (deviceIds.size() == 0) ? std::vector<int>{0} : deviceIds;
+            this->dataDevice = device;
+            return;
+        }
+
+        // =========================
+        // 1) CPU <-> CUDA (原逻辑)
+        // =========================
+    #ifdef USE_CUDA
+        if (this->dataDevice == DataDevice::CPU) {
+            if (device == DataDevice::CUDA) {
+                uint8_t *cpuData = this->cpuData;
+    #ifdef USE_MMAP
+                cpuData = new uint8_t[expansionBytes];
+                memcpy(cpuData, this->cpuData, expansionBytes);
+    #endif
+                // FastllmCudaSetDevice(deviceIds.size() == 0 ? 0 : deviceIds[0]);
+                this->cudaData = FastllmCudaMalloc(expansionBytes);
+                FastllmCudaCopyFromHostToDevice(this->cudaData, cpuData, expansionBytes);
+    #ifdef USE_MMAP
+                delete[] cpuData;
+    #else
+                delete[] this->cpuData;
+                this->cpuData = nullptr;
+    #endif
+            }
+        } else if (this->dataDevice == DataDevice::CUDA) {
+            if (device == DataDevice::CPU) {
+                this->cpuData = new uint8_t[expansionBytes];
+                FastllmCudaCopyFromDeviceToHost(this->cpuData, this->cudaData, expansionBytes);
+                FastllmCudaFree(this->cudaData);
+                this->cudaData = nullptr;
+            } else if (device == DataDevice::CUDA) {
+                int sourceDevice = this->dataDeviceIds.size() == 0 ? 0 : this->dataDeviceIds[0];
+                int destDevice = deviceIds.size() == 0 ? 0 : deviceIds[0];
+                if (sourceDevice != destDevice) {
+                    FastllmCudaSetDevice(destDevice);
+                    void *newCudaData = FastllmCudaMalloc(expansionBytes);
+                    FastllmCudaMemcpyBetweenDevices(destDevice, newCudaData, sourceDevice, this->cudaData, expansionBytes);
+                    FastllmCudaSetDevice(sourceDevice);
                     FastllmCudaFree(this->cudaData);
-                    this->cudaData = nullptr;
-                } else if (device == DataDevice::CUDA) {
-                    int sourceDevice = this->dataDeviceIds.size() == 0 ? 0 : this->dataDeviceIds[0];
-                    int destDevice = deviceIds.size() == 0 ? 0 : deviceIds[0];
-                    if (sourceDevice != destDevice) {
-                                        FastllmCudaSetDevice(destDevice);
-                                        void *newCudaData = FastllmCudaMalloc(expansionBytes);
-                                        FastllmCudaMemcpyBetweenDevices(destDevice, newCudaData, sourceDevice, this->cudaData, expansionBytes);
-                                        FastllmCudaSetDevice(sourceDevice);
-                                        FastllmCudaFree(this->cudaData);
-                                        this->cudaData = newCudaData;
-                                        FastllmCudaSetDevice(destDevice);
-                    }
+                    this->cudaData = newCudaData;
+                    FastllmCudaSetDevice(destDevice);
                 }
             }
-#endif
         }
-        if (deviceIds.size() == 0) {
-            this->dataDeviceIds = {0};
-        } else {
-            this->dataDeviceIds = deviceIds;
-        };
+    #endif // USE_CUDA
+
+        // =========================
+        // 2) CPU <-> ASCEND (新增)
+        //    不支持 CUDA <-> ASCEND
+        // =========================
+    #ifdef USE_ASCEND
+        if (this->dataDevice == DataDevice::CPU) {
+            if (device == DataDevice::ASCEND) {
+                FastllmAclInit();
+
+                uint8_t *cpuData = this->cpuData;
+    #ifdef USE_MMAP
+                // 与 CUDA 分支一致：先拷贝一份可控的 host buffer 再 H2D
+                cpuData = new uint8_t[expansionBytes];
+                memcpy(cpuData, this->cpuData, expansionBytes);
+    #endif
+                // 这里使用 deviceData 作为 ASCEND 的 device 指针（与你 CreateAclTensor 使用一致）
+                if (this->deviceData != nullptr) {
+                    FastllmAclFree(this->deviceData);
+                    this->deviceData = nullptr;
+                }
+                this->deviceData = FastllmAclMalloc(expansionBytes);
+                if (this->deviceData == nullptr) {
+    #ifdef USE_MMAP
+                    delete[] cpuData;
+    #endif
+                    ErrorInFastLLM("Error: FastllmAclMalloc failed in ToDevice(ASCEND).\n");
+                    return;
+                }
+                FastllmAclCopyFromHostToDevice(this->deviceData, cpuData, expansionBytes);
+
+    #ifdef USE_MMAP
+                delete[] cpuData;
+    #else
+                delete[] this->cpuData;
+                this->cpuData = nullptr;
+    #endif
+            }
+        } else if (this->dataDevice == DataDevice::ASCEND) {
+            if (device == DataDevice::CPU) {
+                // D2H
+                this->cpuData = new uint8_t[expansionBytes];
+                FastllmAclCopyFromDeviceToHost(this->cpuData, this->deviceData, expansionBytes);
+                FastllmAclFree(this->deviceData);
+                this->deviceData = nullptr;
+            } else if (device == DataDevice::ASCEND) {
+                // 单卡：目前不做任何 deviceId 迁移
+            }
+        }
+    #endif // USE_ASCEND
+
+        // =========================
+        // 3) 明确拒绝 CUDA <-> ASCEND（按你需求）
+        // =========================
+        if ((this->dataDevice == DataDevice::CUDA && device == DataDevice::ASCEND) ||
+            (this->dataDevice == DataDevice::ASCEND && device == DataDevice::CUDA)) {
+            ErrorInFastLLM("Error: CUDA <-> ASCEND transfer not supported (by design).\n");
+            return;
+        }
+
+    #ifndef USE_ASCEND
+        if (device == DataDevice::ASCEND) {
+            ErrorInFastLLM("Error: ASCEND not enabled (compile with USE_ASCEND).\n");
+            return;
+        }
+    #endif
+    #ifndef USE_CUDA
+        if (device == DataDevice::CUDA) {
+            ErrorInFastLLM("Error: CUDA not enabled (compile with USE_CUDA).\n");
+            return;
+        }
+    #endif
+
+        // update device ids + device type
+        this->dataDeviceIds = (deviceIds.size() == 0) ? std::vector<int>{0} : deviceIds;
         this->dataDevice = device;
     }
+
 
     extern CPUInstructInfo cpuInstructInfo;
 

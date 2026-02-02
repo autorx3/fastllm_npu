@@ -139,6 +139,7 @@ void Test_RMSNorm() {
 
     FastllmAclRMSNorm(npuInput, npuWeight, npuBias, npuOutput, eps);
 
+    //begin
     Data npuResultHost;
     npuResultHost.dataType = DataType::FLOAT32;
     npuResultHost.Resize({Rows, Dim});
@@ -155,7 +156,8 @@ void Test_RMSNorm() {
     for(int i=0; i<npuResultHost.Count(0); ++i) {
         ptrF32[i] = F16toF32(ptrF16[i]);
     }
-
+    // end
+    
     CompareData(cpuOut, npuResultHost, 0.05f); // RMSNorm 允许一点误差
 
     FastllmAclFree(npuInput.deviceData);

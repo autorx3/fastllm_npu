@@ -168,8 +168,6 @@ namespace fastllm {
         }
     }
 
-    // --- 核心计算算子实现 ---
-
     void DoNpuAttentionReshape(Data &q, Data &v, Data &output) {
         std::vector <int> dims = {q.dims[0], q.dims[1], v.dims[2]};
         output.dataType = q.dataType;
@@ -197,6 +195,23 @@ namespace fastllm {
         output.Allocate();
         FastllmAclAttention(q, k, v, mask, output, group, scale, maskType);
     }
+
+    // void NpuAttention::Run(const std::string &opType, const DataDict &datas, const FloatDict &floatParams, const IntDict &intParams) {
+    //     Data emptyData;
+    //     Data &q = *(datas.find("q")->second);
+    //     Data &k = *(datas.find("k")->second);
+    //     Data &v = *(datas.find("v")->second);
+    //     Data &mask = datas.find("mask") != datas.end() ? *(datas.find("mask")->second) : emptyData; 
+    //     Data &output = *(datas.find("output")->second);
+    //     int group = intParams.find("group") != intParams.end() ? intParams.find("group")->second : q.dims[0] / k.dims[0];
+    //     float scale = floatParams.find("scale") != floatParams.end() ? floatParams.find("scale")->second : 1.0;
+    //     int maskType = intParams.find("maskType") != intParams.end() ? intParams.find("maskType")->second : 0;
+
+    //     output.Allocate();
+    //     // reshape + permute qkv output [num_heads,bsz*seqlens,head_dim] ---> [bsz,num_heads,seqlens,head_dim]
+    //     FastllmAclFlashAttentionV3(q, k, v, mask, output, group, scale, maskType);
+    // }
+    
 
     bool NpuEmbedding::CanRun(const std::string &opType, const DataDict &datas, const FloatDict &floatParams, const IntDict &intParams) {
         Data &input = *(datas.find("input")->second);
@@ -255,6 +270,10 @@ namespace fastllm {
         
         output.Allocate();
         FastllmAclMatMulTransB(input, weight, bias, output, 1, 0); 
+
+        if (bias.dims.size() > 0) {
+            FastllmAclAddTo(output, bias, 1.0f);
+        }
     }
 
     // W8A8 量化 Linear
@@ -402,7 +421,7 @@ namespace fastllm {
     void DoNpuSplitReshape(Data &input, int axis, int start, int end, Data &output) {
         int dimsLen = input.dims.size();
         axis = (axis % dimsLen + dimsLen) % dimsLen;
-        start = std::max(0, std::min(input.dims[axis] - 1, start));
+        start = std::max(0, std::min(input.dims[axis], start));
         end = std::max(0, std::min(input.dims[axis], end));
         std::vector <int> dims = input.dims;
         dims[axis] = end - start;
@@ -414,7 +433,7 @@ namespace fastllm {
         output.Allocate();
         int dimsLen = input.dims.size();
         axis = (axis % dimsLen + dimsLen) % dimsLen;
-        start = std::max(0, std::min(input.dims[axis] - 1, start));
+        start = std::max(0, std::min(input.dims[axis], start));
         end = std::max(0, std::min(input.dims[axis], end));
         
         int outer = input.Count(0) / input.Count(axis);

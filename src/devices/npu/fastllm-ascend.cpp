@@ -35,19 +35,19 @@ namespace fastllm {
         void* basePtr = nullptr;      
         size_t capacity = 0;          
         size_t currentOffset = 0;     
-        std::mutex mtx; 
+        //std::mutex mtx; 
 
-        // 默认预分配大小：256MB
-        const size_t DEFAULT_POOL_SIZE = 256 * 1024 * 1024; 
+        // 默认预分配大小：2GB
+        const size_t DEFAULT_POOL_SIZE = 2UL * 1024 * 1024 * 1024; 
 
         // 【关键修改】构造函数什么都不做，避免在 aclInit 前调用 aclrtMalloc
         NpuWorkspace() {}
 
+        NpuWorkspace(const NpuWorkspace&) = delete;
+        NpuWorkspace& operator=(const NpuWorkspace&) = delete;
+
         void* Get(size_t size) {
-            std::lock_guard<std::mutex> lock(mtx);
-            
-            // 1. 延迟初始化：第一次被调用时才申请内存
-            // 此时 main 函数肯定已经运行，aclInit 肯定已经完成了
+            //std::lock_guard<std::mutex> lock(mtx);
             if (basePtr == nullptr) {
                 aclError ret = aclrtMalloc(&basePtr, DEFAULT_POOL_SIZE, ACL_MEM_MALLOC_HUGE_FIRST);
                 if (ret != ACL_SUCCESS) {
@@ -55,50 +55,42 @@ namespace fastllm {
                     return nullptr;
                 }
                 capacity = DEFAULT_POOL_SIZE;
-                // printf("NpuWorkspace Initialized: %zu MB\n", capacity / 1024 / 1024);
+                printf("NpuWorkspace Initialized: %zu MB\n", capacity / 1024 / 1024);
             }
 
             // 2. 32字节对齐
-            size_t alignSize = (size + 31) / 32 * 32;
+            //size_t alignSize = (size + 31) / 32 * 32;
+            size_t alignSize = (size + 255) / 256 * 256;
 
-            // 3. 检查剩余空间与扩容
+            // 3. 检查剩余空间与扩容 ——> 直接报错
             if (currentOffset + alignSize > capacity) {
-                printf("WARNING: NpuWorkspace expanding! Old: %zu MB, Needed: %zu MB\n", 
-                       capacity/1024/1024, (currentOffset + alignSize)/1024/1024);
-                
-                    if (currentOffset == 0 && basePtr) {
-                        aclrtFree(basePtr);
-                        basePtr = nullptr;
-                    } else {
-                        // 如果 currentOffset > 0 且需要扩容，说明当前函数正在使用旧内存块
-                        // 这是一个逻辑死锁。建议在这里直接报 Error，提示增加初始 Pool 大小。
-                        printf("CRITICAL ERROR: Workspace out of memory during a single operator call!\n");
-                    }
-                
-                size_t newCapacity = std::max(capacity * 2, currentOffset + alignSize + 64 * 1024 * 1024);
-                aclError ret = aclrtMalloc(&basePtr, newCapacity, ACL_MEM_MALLOC_HUGE_FIRST);
-                if (ret != ACL_SUCCESS) {
-                    printf("CRITICAL ERROR: NpuWorkspace Expand Failed!\n");
-                    return nullptr;
-                }
-                capacity = newCapacity;
-                currentOffset = 0; 
+                printf("\n[CRITICAL OOM] NpuWorkspace exhausted!\n");
+                printf("  Total Capacity: %zu MB\n", capacity / 1024 / 1024);
+                printf("  Used:           %zu MB\n", currentOffset / 1024 / 1024);
+                printf("  Requested:      %zu Bytes\n", alignSize);
+                printf("SOLUTION: Increase DEFAULT_POOL_SIZE in NpuWorkspace.\n");
+                exit(-1); 
             }
 
-            // 4. 返回地址
+            //返回地址
             void* ptr = (uint8_t*)basePtr + currentOffset;
             currentOffset += alignSize;
-            
             return ptr;
         }
 
         void Reset() {
-            std::lock_guard<std::mutex> lock(mtx);
-            currentOffset = 0;
+            //std::lock_guard<std::mutex> lock(mtx);
+            if (currentOffset > 0) {
+                aclrtSynchronizeStream(g_aclStream); 
+                currentOffset = 0;
+            }
         }
 
         ~NpuWorkspace() {
-            if (basePtr) aclrtFree(basePtr);
+            if (basePtr){
+                aclrtFree(basePtr);
+                basePtr = nullptr;
+            }
         }
     } g_workspace;
 
@@ -172,7 +164,7 @@ namespace fastllm {
         aclrtMemcpy2d(dst, dpitch, src, spitch, width, height, ACL_MEMCPY_DEVICE_TO_DEVICE);
     }
 
-    aclTensor* CreateAclTensor(const Data &data, const std::vector<int> &dims, void* customDevPtr = nullptr) {
+    static inline aclTensor* CreateAclTensor(const Data &data, const std::vector<int> &dims, void* customDevPtr = nullptr) {
         std::vector<int64_t> dims64;
         dims64.reserve(dims.size());
         for (int d : dims) dims64.push_back(d);
@@ -195,6 +187,26 @@ namespace fastllm {
         return aclCreateTensor(dims64.data(), dims64.size(), type,
                                strides.data(), 0, ACL_FORMAT_ND,
                                dims64.data(), dims64.size(), ptr);
+    }
+
+    static inline aclTensor* CreateBoolTensorFromDataND(void* devPtr, const std::vector<int>& dims) {
+        std::vector<int64_t> dims64;
+        dims64.reserve(dims.size());
+        for (int d : dims) dims64.push_back((int64_t)d);
+    
+        std::vector<int64_t> strides(dims.size());
+        int64_t stride = 1;
+        for (int i = (int)dims.size() - 1; i >= 0; --i) {
+            strides[i] = stride;
+            stride *= dims[i];
+        }
+    
+        return aclCreateTensor(dims64.data(), (int64_t)dims64.size(),
+                               ACL_BOOL,
+                               strides.data(),
+                               0, ACL_FORMAT_ND,
+                               dims64.data(), (int64_t)dims64.size(),
+                               devPtr);
     }
 
     void FastllmAclMatMul(const Data &input, const Data &weight, const Data &bias, Data &output, int alpha, int beta) {
@@ -293,7 +305,7 @@ namespace fastllm {
         size_t rstdBytes = numElem * sizeof(float); 
 
         void *rstdPtr = g_workspace.Get(rstdBytes);
-        printf("DEBUG: rstdPtr = %p\n", rstdPtr); // 打印地址
+        //printf("DEBUG: rstdPtr = %p\n", rstdPtr); // 打印地址
 
         std::vector<int64_t> rstdStrides(rstdDims.size());
         int64_t stride = 1;
@@ -312,9 +324,7 @@ namespace fastllm {
         void *opWorkspaceAddr = nullptr;
         if (opWorkspaceSize > 0) {
             opWorkspaceAddr = g_workspace.Get(opWorkspaceSize);
-                printf("DEBUG: opWorkspaceAddr = %p (Size: %lu)\n", opWorkspaceAddr, opWorkspaceSize); // 打印地址
-        } else {
-            printf("DEBUG: opWorkspaceSize is 0, lucky pass!\n");
+                //printf("DEBUG: opWorkspaceAddr = %p (Size: %lu)\n", opWorkspaceAddr, opWorkspaceSize); // 打印地址
         }
 
         aclnnRmsNorm(opWorkspaceAddr, opWorkspaceSize, executor, GetFastllmAclStream());
@@ -406,7 +416,7 @@ namespace fastllm {
         aclDestroyTensor(tW); aclDestroyTensor(tI); aclDestroyTensor(tO);
     }
 
-    
+
     void FastllmAclTopK(const Data &input, Data &output, int topk) {
         int64_t k = topk;
         int64_t dim = input.dims.size() - 1; 
@@ -538,7 +548,131 @@ namespace fastllm {
         FastllmAclMatMul(score, v, Data(), output, 1, 0);
     }
 
-    //性能优化版 需要详细分析
+
+    void FastllmAclFlashAttentionV3(const Data &q, const Data &k, const Data &v, const Data &mask, Data &output, int group, float scale, int maskType) {
+        if (q.dims.size()!=4 || k.dims.size()!=4 || v.dims.size()!=4 || output.dims.size()!=4) {
+            printf(" ERROR: q/k/v/output must be 4D BNSD.\n");
+            return;
+        }
+        if (q.dataType!=DataType::FLOAT16 || k.dataType!=DataType::FLOAT16 ||
+            v.dataType!=DataType::FLOAT16 || output.dataType!=DataType::FLOAT16) {
+            printf(" ERROR: q/k/v/output must be FP16 on Atlas inference cards.\n");
+            return;
+        }
+        if (!q.deviceData || !k.deviceData || !v.deviceData || !output.deviceData) {
+            printf(" ERROR: deviceData is null.\n");
+            return;
+        }
+        const int64_t B   = q.dims[0];
+        const int64_t N   = q.dims[1];
+        const int64_t Sq  = q.dims[2];
+        const int64_t D   = q.dims[3];
+        const int64_t Nk  = k.dims[1];
+        const int64_t Skv = k.dims[2];
+
+        if (Nk != N) {
+            printf("ERROR: Nk(%ld) != N(%ld). GQA not supported here on Atlas inference cards.\n",
+                   (long)Nk, (long)N);
+            return;
+        }
+        if (k.dims[0]!=B || v.dims[0]!=B || v.dims[1]!=Nk || v.dims[2]!=Skv || k.dims[3]!=D || v.dims[3]!=D) {
+            printf("ERROR: k/v shape mismatch.\n");
+            return;
+        }
+        if (output.dims[0]!=B || output.dims[1]!=N || output.dims[2]!=Sq || output.dims[3]!=D) {
+            printf("ERROR: output shape must match q.\n");
+            return;
+        }
+
+        aclTensor *tQ=nullptr, *tK=nullptr, *tV=nullptr, *tOut=nullptr, *tMask=nullptr;
+        tQ   = CreateAclTensor(q, q.dims);
+        tK   = CreateAclTensor(k, k.dims);
+        tV   = CreateAclTensor(v, v.dims);
+        tOut = CreateAclTensor(output, output.dims);
+        if (!tQ || !tK || !tV || !tOut) {
+            printf("ERROR: CreateAclTensor failed.\n");
+            return ;
+        }
+
+        if (maskType != 0) {
+            if (!mask.deviceData || mask.dims.empty()) {
+                printf("ERROR: maskType!=0 but mask empty.\n");
+                return;
+            }
+            if (Sq != Skv) {
+                printf("ERROR: attenMask unsupported when Sq!=Skv on Atlas inference cards.\n");
+                return;
+            }
+            if ((Sq % 128) != 0) {
+                printf("ERROR: attenMask requires Sq/Skv 128-aligned (Sq=%ld).\n", (long)Sq);
+                return;
+            }
+            tMask = CreateBoolTensorFromDataND(mask.deviceData, mask.dims);
+            if (!tMask) { printf("ERROR: create mask tensor failed.\n"); return; }
+        }
+
+        char inputLayout[] = "BNSD";
+        const int64_t numHeads = N;
+        const int64_t numKeyValueHeads = 0;    // Nk==N
+        const double  scaleValue = (double)scale;
+        const int64_t preTokens  = 2147483647;
+        const int64_t nextTokens = 2147483647;
+        const int64_t sparseMode = 0;
+        const int64_t innerPrecise = 1;
+
+        aclTensor* pseShift = nullptr;
+        aclIntArray* actualSeqLengths = nullptr;
+        aclIntArray* actualSeqLengthsKv = nullptr;
+        aclTensor* deqScale1 = nullptr;
+        aclTensor* quantScale1 = nullptr;
+        aclTensor* deqScale2 = nullptr;
+        aclTensor* quantScale2 = nullptr;
+        aclTensor* quantOffset2 = nullptr;
+
+        uint64_t workspaceSize = 0;
+        aclOpExecutor* executor = nullptr;
+        
+        aclError ret = aclnnPromptFlashAttentionV3GetWorkspaceSize(
+            tQ, tK, tV,
+            pseShift,
+            tMask,
+            actualSeqLengths,
+            actualSeqLengthsKv,
+            deqScale1,
+            quantScale1,
+            deqScale2,
+            quantScale2,
+            quantOffset2,
+            numHeads,
+            scaleValue,
+            preTokens,
+            nextTokens,
+            inputLayout,
+            numKeyValueHeads,
+            sparseMode,
+            innerPrecise,
+            tOut,
+            &workspaceSize,
+            &executor
+        );
+        if(ret != ACL_SUCCESS) {
+            printf("ERROR: GetWorkspaceSize failed. ret=%d\n", (int)ret);
+            return ;
+        }
+        void *workspaceAddr = (workspaceSize > 0) ? g_workspace.Get(workspaceSize) : nullptr;
+        ret = aclnnPromptFlashAttentionV3(workspaceAddr, workspaceSize, executor, GetFastllmAclStream());
+        if (ret != ACL_SUCCESS) {
+            printf("ERROR: aclnnPromptFlashAttentionV3 failed. ret=%d\n", (int)ret);
+            return ;
+        }
+
+        aclDestroyTensor(tQ);
+        aclDestroyTensor(tK);
+        aclDestroyTensor(tV);
+        aclDestroyTensor(tOut);
+        if (tMask) aclDestroyTensor(tMask);
+    }
+
     void FastllmAclRepeat(void *src, void *dst, int outer, int repeatTimes, int inputStride, int outputStride, int channelsInner, int channelsInputInner) {
 
         std::vector<int64_t> selfShape = { (int64_t)outer, 1, (int64_t)channelsInputInner };
@@ -712,7 +846,6 @@ namespace fastllm {
         
         aclnnPermute(opWorkspaceAddr, workspaceSize, executor, GetFastllmAclStream());
 
-        //支持指针交换（Pointer Swapping）且拥有一个持久化内存池 后可优化
         aclrtMemcpyAsync(mutableInput.deviceData, dataBytes, 
                         tempPtr, dataBytes, 
                         ACL_MEMCPY_DEVICE_TO_DEVICE, GetFastllmAclStream());

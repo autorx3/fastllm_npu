@@ -15,6 +15,11 @@
 #include "devices/multicuda/fastllm-multicuda.cuh"
 #endif
 
+#ifdef USE_ASCEND
+#include "devices/npu/ascenddevice.h"
+#include "devices/npu/fastllm-ascend.h"
+#endif
+
 #ifdef USE_TFACC
 #include "devices/tfacc/tfaccdevice.h"
 #endif
@@ -39,6 +44,10 @@ namespace fastllm {
             this->devices.push_back((BaseDevice*) new CudaDevice());
             this->devices.push_back((BaseDevice*) new MultiCudaDevice((CudaDevice*)this->devices.back()));
         }
+#endif
+#ifdef USE_ASCEND
+        printf("ASCEND DEVICE ADD ON\n");
+        this->devices.push_back((BaseDevice*) new NpuDevice());
 #endif
 #ifdef USE_TOPS
         this->devices.push_back((BaseDevice*) new TopsDevice());

@@ -5,6 +5,8 @@ project(fastllm LANGUAGES CXX)
 option(USE_CUDA "use CUDA" OFF)
 option(CUDA_NO_TENSOR_CORE "Optimize for legacy CUDA GPUs which has Tensor Core." OFF)
 
+option(USE_ASCEND "use ASCEND" OFF)
+
 option(USE_ROCM "use ROCm" OFF)
 
 option(USE_TFACC "use tfacc" OFF)
@@ -107,6 +109,8 @@ if(USE_ROCM)
 endif()
 
 message(STATUS "USE_CUDA: ${USE_CUDA}")
+
+message(STATUS "USE_ASCEND: ${USE_ASCEND}")
 
 message(STATUS "USE_ROCM: ${USE_ROCM}")
 
@@ -241,6 +245,42 @@ if (USE_CUDA)
     set(CMAKE_CUDA_ARCHITECTURES ${CUDA_ARCH})
 endif()
 
+if (USE_ASCEND)
+    add_compile_definitions(USE_ASCEND)
+
+    if (DEFINED ENV{ASCEND_HOME_PATH})
+        set(ASCEND_PATH $ENV{ASCEND_HOME_PATH})
+    else()
+        set(ASCEND_PATH /usr/local/Ascend/ascend-toolkit/latest)
+    endif()
+    message(STATUS "ASCEND_PATH: ${ASCEND_PATH}")
+
+    # Ascend headers
+    include_directories(${ASCEND_PATH}/include)
+    include_directories(${ASCEND_PATH}/include/aclnn)
+
+    # fastllm npu headers
+    include_directories(include/devices/npu)
+
+    # NPU sources
+    set(FASTLLM_ASCEND_SOURCES
+        src/devices/npu/ascenddevice.cpp
+        src/devices/npu/fastllm-ascend.cpp
+    )
+
+    # Link Ascend runtime/op libs (same as your standalone)
+    set(FASTLLM_LINKED_LIBS ${FASTLLM_LINKED_LIBS}
+        ${ASCEND_PATH}/lib64/libascendcl.so
+        ${ASCEND_PATH}/lib64/libnnopbase.so
+        ${ASCEND_PATH}/lib64/libopapi.so
+        pthread
+    )
+
+    # 可选：如果你不想依赖 LD_LIBRARY_PATH，可加 rpath（只建议 Linux）
+    # set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,-rpath,${ASCEND_PATH}/lib64")
+    # set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -Wl,-rpath,${ASCEND_PATH}/lib64")
+endif()
+
 if(USE_ROCM)
     list(APPEND CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/third_party/hipify_torch/cmake")
     include(Hipify)
@@ -355,16 +395,25 @@ if (PY_API)
 
     include_directories(third_party/pybind11/include)
     file(GLOB FASTLLM_CXX_HEADERS include/**/*.h)
-    add_library(pyfastllm MODULE src/pybinding.cpp ${FASTLLM_CXX_SOURCES} ${FASTLLM_CXX_HEADERS} ${FASTLLM_CUDA_SOURCES} ${FASTLLM_TFACC_SOURCES} ${FASTLLM_TOPS_SOURCES})
+    # add_library(pyfastllm MODULE src/pybinding.cpp ${FASTLLM_CXX_SOURCES} ${FASTLLM_CXX_HEADERS} ${FASTLLM_CUDA_SOURCES} ${FASTLLM_TFACC_SOURCES} ${FASTLLM_TOPS_SOURCES})
+    add_library(pyfastllm MODULE src/pybinding.cpp
+        ${FASTLLM_CXX_SOURCES}
+        ${FASTLLM_CXX_HEADERS}
+        ${FASTLLM_CUDA_SOURCES}
+        ${FASTLLM_TFACC_SOURCES}
+        ${FASTLLM_TOPS_SOURCES}
+        ${FASTLLM_ASCEND_SOURCES}
+    )
     target_link_libraries(pyfastllm PUBLIC pybind11::module ${FASTLLM_LINKED_LIBS})
     pybind11_extension(pyfastllm)
 else()
 add_library(fastllm OBJECT
-            ${FASTLLM_CXX_SOURCES}
-            ${FASTLLM_CUDA_SOURCES}
-            ${FASTLLM_TFACC_SOURCES}
-            ${FASTLLM_TOPS_SOURCES}
-            )
+    ${FASTLLM_CXX_SOURCES}
+    ${FASTLLM_CUDA_SOURCES}
+    ${FASTLLM_TFACC_SOURCES}
+    ${FASTLLM_TOPS_SOURCES}
+    ${FASTLLM_ASCEND_SOURCES}
+)
 target_link_libraries(fastllm PUBLIC ${FASTLLM_LINKED_LIBS})
 
 add_executable(main main.cpp)
@@ -401,7 +450,15 @@ if (BUILD_CLI)
     target_link_libraries(FastllmStudio_cli fastllm)
 endif()
 
-add_library(fastllm_tools SHARED ${FASTLLM_CXX_SOURCES} ${FASTLLM_CUDA_SOURCES} ${FASTLLM_TFACC_SOURCES} ${FASTLLM_TOPS_SOURCES} tools/src/pytools.cpp)
+# add_library(fastllm_tools SHARED ${FASTLLM_CXX_SOURCES} ${FASTLLM_CUDA_SOURCES} ${FASTLLM_TFACC_SOURCES} ${FASTLLM_TOPS_SOURCES} tools/src/pytools.cpp)
+add_library(fastllm_tools SHARED
+    ${FASTLLM_CXX_SOURCES}
+    ${FASTLLM_CUDA_SOURCES}
+    ${FASTLLM_TFACC_SOURCES}
+    ${FASTLLM_TOPS_SOURCES}
+    ${FASTLLM_ASCEND_SOURCES}
+    tools/src/pytools.cpp
+)
 target_link_libraries(fastllm_tools PUBLIC ${FASTLLM_LINKED_LIBS})
 
 if (${CMAKE_HOST_WIN32})

@@ -1,0 +1,15 @@
+Test_Silu: 激活函数 (Element-wise)
+Test_MatMul_FP16: 矩阵乘法 (FP16/FP32 混合)
+Test_TopK: 前 K 大数值及索引
+Test_Add_Scalar: 标量加法
+Test_AddTo: 累加操作 (Axpy: $Y = Y + \alpha X$)
+Test_Mul_Scalar: 标量乘法
+Test_MulTo: 乘法赋值 ($Y = Y * X * \alpha$)
+Test_Permute: 维度重排 (Transpose)
+Test_RoPE: 旋转位置编码 (包含 Rotate Half 和 Interleaved 模式验证)
+Test_RoPE_Dual_Version: 旋转位置编码 (单输入 vs 双输入 Fused 版)
+Test_Embedding: 词嵌入查找
+Test_Repeat: 数据广播/复制 (用于 GQA 等场景)
+Test_QuantLinear_Dynamic_W8A16: 动态量化线性层
+Test_RMSNorm: 均方根归一化
+Test_SwiGLU & Test_Softmax: 门控激活与 Softmax
