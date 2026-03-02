@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.10)
-project(cppOps_standalone LANGUAGES CXX)
+project(test_npu_standalone LANGUAGES CXX)
 
 option(USE_ASCEND "Enable Ascend NPU backend" ON)  # 默认 ON，你也可以改 OFF
 
@@ -68,11 +68,11 @@ if (USE_ASCEND)
 endif()
 
 # 5. 生成可执行文件
-add_executable(cppOps
-    cppOps.cpp
+add_executable(test_npu
+    test_npu.cpp
     ${FASTLLM_CORE_SOURCES}
     ${FASTLLM_NPU_SOURCES}
 )
 
 # 6. 链接库（仅 Ascend 时链接 Ascend so）
-target_link_libraries(cppOps PRIVATE ${ASCEND_LIBS})
+target_link_libraries(test_npu PRIVATE ${ASCEND_LIBS})

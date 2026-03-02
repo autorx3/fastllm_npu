@@ -267,8 +267,9 @@ namespace fastllm {
         Data &output = *(datas.find("output")->second);
         Data emptyBias;
         Data &bias = datas.find("bias") != datas.end() ? *(datas.find("bias")->second) : emptyBias;
-        
+
         output.Allocate();
+
         FastllmAclMatMulTransB(input, weight, bias, output, 1, 0); 
 
         if (bias.dims.size() > 0) {
@@ -429,23 +430,6 @@ namespace fastllm {
         output.Resize(dims);
     }
 
-    void DoNpuSplit(Data &input, int axis, int start, int end, Data &output) {
-        output.Allocate();
-        int dimsLen = input.dims.size();
-        axis = (axis % dimsLen + dimsLen) % dimsLen;
-        start = std::max(0, std::min(input.dims[axis], start));
-        end = std::max(0, std::min(input.dims[axis], end));
-        
-        int outer = input.Count(0) / input.Count(axis);
-        int inputStride = input.Count(axis);
-        int outputStride = output.Count(axis);
-        int inner = input.strides[axis];
-        int unitSize = input.unitSize;
-
-        FastllmAclMemcpy2DDeviceToDevice((uint8_t*)output.deviceData, outputStride * unitSize,
-                                         (uint8_t*)input.deviceData + start * inner * unitSize, inputStride * unitSize,
-                                         (end - start) * inner * unitSize, outer);
-    }
 
     void NpuSplitOp::Reshape(const std::string &opType, const DataDict &datas, const FloatDict &floatParams, const IntDict &intParams) {
         Data &input = *(datas.find("input")->second);
@@ -462,7 +446,9 @@ namespace fastllm {
         int axis = intParams.find("axis") != intParams.end() ? intParams.find("axis")->second : -1;
         int start = intParams.find("start") != intParams.end() ? intParams.find("start")->second : 0;
         int end = intParams.find("end") != intParams.end() ? intParams.find("end")->second : 0;
-        DoNpuSplit(input, axis, start, end, output);
+        //output.dataDevice = fastllm::DataDevice::ASCEND;
+        output.Allocate();
+        FastllmAclSplit(input, axis, start, end, output);
     }
 
     void NpuRepeatOp::Run(const std::string &opType, const DataDict &datas, const FloatDict &floatParams, const IntDict &intParams) {
@@ -522,29 +508,47 @@ namespace fastllm {
                                          input1.dims[axis] * inner * unitSize, outer);
     }
 
+    // void NpuCatOp::Run(const std::string &opType, const DataDict &datas, const FloatDict &floatParams, const IntDict &intParams) {
+    //     Data &input0 = *(datas.find("input0")->second);
+    //     Data &input1 = *(datas.find("input1")->second);
+    //     Data &output = *(datas.find("output")->second);
+    //     output.Allocate();
+        
+    //     int axis = intParams.find("axis") != intParams.end() ? intParams.find("axis")->second : -1;
+    //     int dimsLen = input0.dims.size();
+    //     axis = (axis % dimsLen + dimsLen) % dimsLen;
+
+    //     int outer = output.Count(0) / output.Count(axis);
+    //     int input0Stride = input0.Count(axis);
+    //     int input1Stride = input1.Count(axis);
+    //     int outputStride = output.Count(axis);
+    //     int inner = input0.strides[axis];
+    //     int unitSize = input0.unitSize;
+
+    //     FastllmAclMemcpy2DDeviceToDevice((uint8_t *) output.deviceData, outputStride * unitSize,
+    //                                      (uint8_t *) input0.deviceData, input0Stride * unitSize,
+    //                                      input0.dims[axis] * inner * unitSize, outer);
+    //     FastllmAclMemcpy2DDeviceToDevice((uint8_t *) output.deviceData + input0.dims[axis] * inner * unitSize, outputStride * unitSize,
+    //                                      (uint8_t *) input1.deviceData, input1Stride * unitSize,
+    //                                      input1.dims[axis] * inner * unitSize, outer);
+    // }
+
     void NpuCatOp::Run(const std::string &opType, const DataDict &datas, const FloatDict &floatParams, const IntDict &intParams) {
         Data &input0 = *(datas.find("input0")->second);
         Data &input1 = *(datas.find("input1")->second);
         Data &output = *(datas.find("output")->second);
-        output.Allocate();
         
+        // 1. 处理拼接维度 (支持负数索引，例如 -1 代表最后一维)
         int axis = intParams.find("axis") != intParams.end() ? intParams.find("axis")->second : -1;
         int dimsLen = input0.dims.size();
         axis = (axis % dimsLen + dimsLen) % dimsLen;
 
-        int outer = output.Count(0) / output.Count(axis);
-        int input0Stride = input0.Count(axis);
-        int input1Stride = input1.Count(axis);
-        int outputStride = output.Count(axis);
-        int inner = input0.strides[axis];
-        int unitSize = input0.unitSize;
+        // 2. 拦截户口本：强制把 output 划归 NPU 管辖并分配显存坑位
+        //output.dataDevice = fastllm::DataDevice::ASCEND;
+        output.Allocate(); 
 
-        FastllmAclMemcpy2DDeviceToDevice((uint8_t *) output.deviceData, outputStride * unitSize,
-                                         (uint8_t *) input0.deviceData, input0Stride * unitSize,
-                                         input0.dims[axis] * inner * unitSize, outer);
-        FastllmAclMemcpy2DDeviceToDevice((uint8_t *) output.deviceData + input0.dims[axis] * inner * unitSize, outputStride * unitSize,
-                                         (uint8_t *) input1.deviceData, input1Stride * unitSize,
-                                         input1.dims[axis] * inner * unitSize, outer);
+        // 3. 将解包好的核心数据，干干净净地下发给底层的 CANN 封装函数
+        FastllmAclCat(input0, input1, output, axis);
     }
 
     void NpuPermuteSelfOp::Run(const std::string &opType, const DataDict &datas, const FloatDict &floatParams, const IntDict &intParams) {

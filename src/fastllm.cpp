@@ -30,6 +30,7 @@
 #include "immintrin.h"
 #endif
 
+//ascend
 #ifdef USE_ASCEND
 #include "fastllm-ascend.h"
 #endif
@@ -429,6 +430,7 @@ namespace fastllm {
         }
     };
 
+    // Data begin
     Data::Data(fastllm::DataType type) {
         this->dataType = type;
         this->UpdateUnitSize();
@@ -495,7 +497,7 @@ namespace fastllm {
             std::memcpy(this->cpuData, data.data(), this->GetBytes());
             return;
         }
-
+        //ascend
         if (type == DataType::FLOAT16) {
             // data 是 float，目标是 fp16 bits (2 bytes each)
             uint16_t *dst = reinterpret_cast<uint16_t*>(this->cpuData);
@@ -1203,6 +1205,19 @@ namespace fastllm {
 #else
             ErrorInFastLLM("Error: cuda is not supported.\n");
 #endif
+        } else if (this->dataDevice == DataDevice::ASCEND) {
+// =========================
+// 新增：ASCEND Malloc 分支
+// =========================
+#ifdef USE_ASCEND
+            this->deviceData = FastllmAclMalloc(this->expansionBytes);
+            if (this->deviceData == nullptr) {
+                ErrorInFastLLM("Error: FastllmAclMalloc failed out of memory.\n");
+            }
+            FastllmAclMemset0(this->deviceData, this->expansionBytes); 
+#else
+            ErrorInFastLLM("Error: ascend is not supported.\n");
+#endif
         }
     }
 
@@ -1230,6 +1245,18 @@ namespace fastllm {
 #else
             ErrorInFastLLM("Error: cuda is not supported.\n");
 #endif
+        } else if (this->dataDevice == DataDevice::ASCEND) {
+// =========================
+// 新增：ASCEND Free 分支
+// =========================
+#ifdef USE_ASCEND
+            if (this->deviceData != nullptr) {
+                FastllmAclFree(this->deviceData);
+                this->deviceData = nullptr;
+            }
+#else
+            ErrorInFastLLM("Error: ascend is not supported.\n");
+#endif
         }
     }
 
@@ -1252,7 +1279,7 @@ namespace fastllm {
                 uint16_t *h = (uint16_t*)cpuData;
                 std::fill(h, h + Count(0), float_to_half(v));
             }
-        } if (this->dataDevice == DataDevice::CUDA) {
+        } else if (this->dataDevice == DataDevice::CUDA) {
 #ifdef USE_CUDA
             if (this->dataType == DataType::FLOAT32) {
                 std::vector <float> f = std::vector <float> (Count(0), v);
@@ -1260,6 +1287,19 @@ namespace fastllm {
             } else if (this->dataType == DataType::FLOAT16) {
                 std::vector <uint16_t> f = std::vector <uint16_t> (Count(0), float_to_half(v));
                 FastllmCudaCopyFromHostToDevice(cudaData, f.data(), Count(0) * sizeof(uint16_t));
+            }
+#endif
+        } else if (this->dataDevice == DataDevice::ASCEND) {
+// =========================
+// 新增：ASCEND Allocate(v) 分支
+// =========================
+#ifdef USE_ASCEND
+            if (this->dataType == DataType::FLOAT32) {
+                std::vector <float> f = std::vector <float> (Count(0), v);
+                FastllmAclCopyFromHostToDevice(deviceData, f.data(), Count(0) * sizeof(float));
+            } else if (this->dataType == DataType::FLOAT16) {
+                std::vector <uint16_t> f = std::vector <uint16_t> (Count(0), float_to_half(v));
+                FastllmAclCopyFromHostToDevice(deviceData, f.data(), Count(0) * sizeof(uint16_t));
             }
 #endif
         } else {

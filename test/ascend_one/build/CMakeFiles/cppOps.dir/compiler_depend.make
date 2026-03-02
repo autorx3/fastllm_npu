@@ -3821,7 +3821,8 @@ CMakeFiles/cppOps.dir/home/HwHiAiUser/fastllm-master/src/devices/npu/fastllm-asc
   /usr/local/Ascend/ascend-toolkit/latest/include/aclnnop/aclnn_cast.h \
   /usr/local/Ascend/ascend-toolkit/latest/include/aclnnop/aclnn_cat.h \
   /usr/local/Ascend/ascend-toolkit/latest/include/aclnnop/aclnn_expand.h \
-  /usr/local/Ascend/ascend-toolkit/latest/include/aclnnop/aclnn_prompt_flash_attention_v3.h
+  /usr/local/Ascend/ascend-toolkit/latest/include/aclnnop/aclnn_prompt_flash_attention_v3.h \
+  /usr/local/Ascend/ascend-toolkit/latest/include/aclnnop/aclnn_slice.h
 
 CMakeFiles/cppOps.dir/home/HwHiAiUser/fastllm-master/src/executor.cpp.o: /home/HwHiAiUser/fastllm-master/src/executor.cpp \
   /usr/include/stdc-predef.h \
@@ -7638,6 +7639,8 @@ CMakeFiles/cppOps.dir/home/HwHiAiUser/fastllm-master/third_party/json11/json11.c
 /usr/include/endian.h:
 
 /usr/include/c++/11/ext/aligned_buffer.h:
+
+/usr/local/Ascend/ascend-toolkit/latest/include/aclnnop/aclnn_slice.h:
 
 /usr/include/aarch64-linux-gnu/bits/uintn-identity.h:
 

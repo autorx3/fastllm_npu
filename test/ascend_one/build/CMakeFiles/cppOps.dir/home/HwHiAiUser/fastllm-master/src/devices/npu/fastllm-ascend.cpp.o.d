@@ -274,4 +274,5 @@ CMakeFiles/cppOps.dir/home/HwHiAiUser/fastllm-master/src/devices/npu/fastllm-asc
  /usr/local/Ascend/ascend-toolkit/latest/include/aclnnop/aclnn_cast.h \
  /usr/local/Ascend/ascend-toolkit/latest/include/aclnnop/aclnn_cat.h \
  /usr/local/Ascend/ascend-toolkit/latest/include/aclnnop/aclnn_expand.h \
- /usr/local/Ascend/ascend-toolkit/latest/include/aclnnop/aclnn_prompt_flash_attention_v3.h
+ /usr/local/Ascend/ascend-toolkit/latest/include/aclnnop/aclnn_prompt_flash_attention_v3.h \
+ /usr/local/Ascend/ascend-toolkit/latest/include/aclnnop/aclnn_slice.h

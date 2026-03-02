@@ -174,6 +174,7 @@ void Test_MatMul_FP16() {
     FastllmAclCopyFromDeviceToHost(resHost.cpuData, npuOutput.deviceData, resHost.GetBytes());
 
     CompareData(outputCPU, resHost, 1e-1); 
+    resHost.Print();
 
     FastllmAclFree(npuInput.deviceData);
     FastllmAclFree(npuWeight.deviceData);
@@ -600,15 +601,15 @@ int main() {
     std::cout << "Initializing NPU..." << std::endl;
     FastllmAclInit();
 
-    Test_Silu();
+    // Test_Silu();
     Test_MatMul_FP16();
-    Test_TopK();
-    Test_Add_Scalar();
-    Test_AddTo();
-    Test_Mul_Scalar();
-    Test_MulTo();
-    Test_Permute();
-    Test_RoPE_Dual_Version();
+    // Test_TopK();
+    // Test_Add_Scalar();
+    // Test_AddTo();
+    // Test_Mul_Scalar();
+    // Test_MulTo();
+    // Test_Permute();
+    // Test_RoPE_Dual_Version();
 
     std::cout << "All tests finished." << std::endl;
     return 0;

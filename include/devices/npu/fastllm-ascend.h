@@ -25,7 +25,12 @@
      void FastllmAclCopyFromDeviceToHost(void *dst, void *src, size_t size);
      void FastllmAclCopyFromDeviceToDevice(void *dst, void *src, size_t size);
      void FastllmAclMemcpy2DDeviceToDevice(void *dst, size_t dpitch, const void *src, size_t spitch, size_t width, size_t height);
- 
+     void FastllmAclMemset0(void *devPtr, size_t size);
+
+     void *FastllmAclPrepareInput(const fastllm::Data &input);
+     void FastllmAclFinishInput(const fastllm::Data &input, void *data);
+     void *FastllmAclPrepareOutput(fastllm::Data &output);
+     void FastllmAclFinishOutput(fastllm::Data &output, void *data);
      // =======================================================================
      // 2. 核心计算算子 (Core Math)
      // =======================================================================
@@ -61,6 +66,8 @@
      void FastllmAclPermute(const fastllm::Data &input, const std::vector<int> &axis);
      void FastllmAclRepeat(void *src, void *dst, int outer, int repeatTimes, int inputStride, int outputStride, int channelsInner, int channelsInputInner);
      void FastllmAclTopK(const fastllm::Data &input, fastllm::Data &output, int topk);
+     void FastllmAclCat(const Data &input0, const Data &input1, Data &output, int axis);
+     void FastllmAclSplit(const fastllm::Data &input, int axis, int start, int end, fastllm::Data &output);
      void FastllmAclEmbedding(const fastllm::Data &input, const fastllm::Data &weight, fastllm::Data &output);
  
      // =======================================================================
