@@ -451,6 +451,26 @@ namespace fastllm {
         FastllmAclSplit(input, axis, start, end, output);
     }
 
+    // void NpuRepeatOp::Run(const std::string &opType, const DataDict &datas, const FloatDict &floatParams, const IntDict &intParams) {
+    //     Data &input = *(datas.find("input")->second);
+    //     Data &output = *(datas.find("output")->second);
+    //     int axis = intParams.find("axis") != intParams.end() ? intParams.find("axis")->second : -1;
+    //     int repeatTimes = intParams.find("repeatTimes") != intParams.end() ? intParams.find("repeatTimes")->second : 1;
+        
+    //     int dimsLen = input.dims.size();
+    //     axis = (axis % dimsLen + dimsLen) % dimsLen;
+    //     output.Allocate();
+
+    //     int outer = output.Count(0) / output.Count(axis);
+    //     int inputStride = input.Count(axis);
+    //     int outputStride = output.Count(axis);
+    //     int channels = input.dims[axis];
+    //     int inner = input.strides[axis];
+    //     int unitSize = input.unitSize;
+        
+    //     FastllmAclRepeat(input.deviceData, output.deviceData, outer, repeatTimes, inputStride * unitSize, outputStride * unitSize, channels * inner * unitSize, channels * inner * unitSize);
+    // }
+
     void NpuRepeatOp::Run(const std::string &opType, const DataDict &datas, const FloatDict &floatParams, const IntDict &intParams) {
         Data &input = *(datas.find("input")->second);
         Data &output = *(datas.find("output")->second);
@@ -461,14 +481,8 @@ namespace fastllm {
         axis = (axis % dimsLen + dimsLen) % dimsLen;
         output.Allocate();
 
-        int outer = output.Count(0) / output.Count(axis);
-        int inputStride = input.Count(axis);
-        int outputStride = output.Count(axis);
-        int channels = input.dims[axis];
-        int inner = input.strides[axis];
-        int unitSize = input.unitSize;
-        
-        FastllmAclRepeat(input.deviceData, output.deviceData, outer, repeatTimes, inputStride * unitSize, outputStride * unitSize, channels * inner * unitSize, channels * inner * unitSize);
+        // 【系统性回归】：将完整的 Data 护口本移交给 CANN 后端处理，拒绝黑客式的 void* 传参
+        FastllmAclRepeat(input, output, axis, repeatTimes);
     }
 
     void NpuCatDirectOp::Run(const std::string &opType, const DataDict &datas, const FloatDict &floatParams, const IntDict &intParams) {
@@ -591,6 +605,7 @@ namespace fastllm {
         FastllmAclAttentionMask(input, mask, maskValue);
     }
 
+    //bsnd d == 128 cos_sin n = 1
     void NpuNearlyRotatePosition2DOp::Run(const std::string &opType, const DataDict &datas, const FloatDict &floatParams, const IntDict &intParams) {
         Data &data = *(datas.find("input")->second);
         Data &positionIds = *(datas.find("positionIds")->second);

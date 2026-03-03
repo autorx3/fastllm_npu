@@ -1,327 +1,269 @@
 #include "fastllm.h"
-//#ifdef USE_ASCEND
 #include "fastllm-ascend.h"
-//#endif
-// void callBaseOp(int optype=0){
-//     // fastllm::Data inputs = fastllm::Data(fastllm::DataType::FLOAT32, {1, 2}, {1, 5});
-//     // fastllm::Data outputs = fastllm::Data(fastllm::DataType::FLOAT32, {1, 2}, {3, 4});
-//     fastllm::Data inputs = fastllm::Data(fastllm::DataType::FLOAT16, {1, 2}, std::vector<float>{1.f, 5.f});
-//     fastllm::Data outputs = fastllm::Data(fastllm::DataType::FLOAT16, {1, 2}, std::vector<float>{3.f, 4.f});
-//     switch (optype)
-//     {
-//     case 0:
-//         //inputs.ToDevice(fastllm::DataDevice::ASCEND);
-//         //outputs.ToDevice(fastllm::DataDevice::ASCEND);
-//         fastllm::AddTo(outputs, inputs, 1);
-//         break;
-//     case 1:
-//         fastllm::Cat(inputs, inputs, 0, outputs);
-//         break;
-//     case 2:
-//         fastllm::Mul(inputs, 2, outputs);
-//         break;
-//     case 3:
-//         fastllm::Permute(inputs, {1, 0}, outputs);
-//         break;
-//     case 4:
-//         fastllm::Split(inputs, 0, 0, 1, outputs);
-//         break;
-//     case 5:
-//         fastllm::Permute(inputs, {1, 0}, outputs);
-//         fastllm::MatMul(inputs, outputs, outputs);
-//         break;
-//     default:
-//         break;
-//     } 
-//     outputs.ToDevice(fastllm::DataDevice::CPU);
-//     std::cout<<"case:"<<optype<<std::endl;
-//     outputs.Print();
-// }
+#include <iostream>
+#include <vector>
+#include <cmath>
 
-void callBaseOp(int optype=0) {
-    std::cout << "\n=======================================" << std::endl;
-    std::cout << "Running Case: " << optype << std::endl;
+void callEmbeddingOp() {
+    std::cout << "\n=== Testing EmbeddingOp ===" << std::endl;
+    // 词表大小 5，维度 4
+    std::vector<float> weightData = {
+        0.0f, 0.0f, 0.0f, 0.0f, // Token 0
+        1.0f, 1.0f, 1.0f, 1.0f, // Token 1
+        2.0f, 2.0f, 2.0f, 2.0f, // Token 2
+        3.0f, 3.0f, 3.0f, 3.0f, // Token 3
+        4.0f, 4.0f, 4.0f, 4.0f  // Token 4
+    };
+    // 注意：你的 CanRun 强制要求 input 是 FLOAT32
+    std::vector<float> inputData = {2.0f, 4.0f}; 
 
-    switch (optype) {
-        case 0: {
-            // 【难度升级】：3D 张量的 In-place AddTo
-            std::vector<float> vecA(24); for(int i=0;i<24;++i) vecA[i] = i * 1.0f;
-            std::vector<float> vecB(24); for(int i=0;i<24;++i) vecB[i] = 10.0f;
-            
-            // 直接构造，坚决不用赋值运算符！
-            fastllm::Data inputs(fastllm::DataType::FLOAT16, {2, 3, 4}, vecA);
-            fastllm::Data outputs(fastllm::DataType::FLOAT16, {2, 3, 4}, vecB);
-            
-            inputs.ToDevice(fastllm::DataDevice::ASCEND);
-            outputs.ToDevice(fastllm::DataDevice::ASCEND);
-            
-            fastllm::AddTo(outputs, inputs, 2.0f); 
-            
-            outputs.ToDevice(fastllm::DataDevice::CPU);
-            outputs.Print();
-            break;
-        }
-        case 1: {
-            // 【难度升级】：3D 张量在深层轴 (axis=2) 上进行 Cat
-            std::vector<float> vecA(12, 1.0f); 
-            std::vector<float> vecB(16, 2.0f); 
-            fastllm::Data input0(fastllm::DataType::FLOAT16, {2, 2, 3}, vecA);
-            fastllm::Data input1(fastllm::DataType::FLOAT16, {2, 2, 4}, vecB); 
-            fastllm::Data outputs; // 让算子自己去 Allocate
-            
-            input0.ToDevice(fastllm::DataDevice::ASCEND);
-            input1.ToDevice(fastllm::DataDevice::ASCEND);
-            
-            fastllm::Cat(input0, input1, 2, outputs);
-            
-            outputs.ToDevice(fastllm::DataDevice::CPU);
-            outputs.Print();
-            break;
-        }
-        case 2: {
-            // 【难度升级】：带负数和浮点的 Mul
-            std::vector<float> vecA(12); for(int i=0;i<12;++i) vecA[i] = i * 1.0f;
-            fastllm::Data inputs(fastllm::DataType::FLOAT16, {2, 2, 3}, vecA);
-            fastllm::Data outputs;
-            
-            inputs.ToDevice(fastllm::DataDevice::ASCEND);
-            fastllm::Mul(inputs, -0.5f, outputs);
-            
-            outputs.ToDevice(fastllm::DataDevice::CPU);
-            outputs.Print();
-            break;
-        }
-        case 3: {
-            // 【地狱难度】：4D 张量的 Permute
-            std::vector<float> vecA(24); for(int i=0;i<24;++i) vecA[i] = i * 1.0f;
-            fastllm::Data inputs(fastllm::DataType::FLOAT16, {2, 3, 2, 2}, vecA);
-            fastllm::Data outputs;
-            
-            inputs.ToDevice(fastllm::DataDevice::ASCEND);
-            fastllm::Permute(inputs, {0, 2, 1, 3}, outputs); 
-            
-            outputs.ToDevice(fastllm::DataDevice::CPU);
-            outputs.Print();
-            break;
-        }
-        case 4: {
-            // 【难度升级】：3D 张量在轴 1 上进行切分
-            std::vector<float> vecA(30); for(int i=0;i<30;++i) vecA[i] = i * 1.0f;
-            fastllm::Data inputs(fastllm::DataType::FLOAT16, {2, 5, 3}, vecA);
-            fastllm::Data outputs;
-            
-            inputs.ToDevice(fastllm::DataDevice::ASCEND);
-            fastllm::Split(inputs, 1, 1, 4, outputs); 
-            
-            outputs.ToDevice(fastllm::DataDevice::CPU);
-            outputs.Print();
-            break;
-        }
-        case 5: {
-            // 【极高难度】：Batched MatMul (BMM) 结合 Permute
-            std::vector<float> vecA(12, 1.0f);
-            std::vector<float> vecB(24, 2.0f);
-            fastllm::Data matA(fastllm::DataType::FLOAT16, {2, 2, 3}, vecA);
-            fastllm::Data matB_pre(fastllm::DataType::FLOAT16, {2, 4, 3}, vecB);
-            fastllm::Data matB;
-            fastllm::Data outputs;
-            
-            matA.ToDevice(fastllm::DataDevice::ASCEND);
-            matB_pre.ToDevice(fastllm::DataDevice::ASCEND);
-            
-            fastllm::Permute(matB_pre, {0, 2, 1}, matB); 
-            fastllm::MatMul(matA, matB, outputs); 
-            
-            outputs.ToDevice(fastllm::DataDevice::CPU);
-            outputs.Print();
-            break;
-        }
-        default:
-            break;
-    } 
-    std::cout << "=======================================\n" << std::endl;
-}
-
-void callNormOp(int normType=0){
-    fastllm::Data inputs = fastllm::Data(fastllm::DataType::FLOAT32, {1, 2}, {1, 5}); 
-    fastllm::Data weights = fastllm::Data(fastllm::DataType::FLOAT32, {1, 2}, {1, 2});
-    fastllm::Data gamma = fastllm::Data(fastllm::DataType::FLOAT32, {1, 2}, {1, 1});
-    fastllm::Data beta = fastllm::Data(fastllm::DataType::FLOAT32, {1, 2}, {0, 0});
+    fastllm::Data inputs(fastllm::DataType::FLOAT32, {1, 2}, inputData);
+    fastllm::Data weights(fastllm::DataType::FLOAT16, {5, 4}, weightData);
     fastllm::Data outputs;
 
-    switch (normType)
-    {
-    case 0:
-        fastllm::LayerNorm(inputs, gamma, beta, -1, outputs);
-        break;
-    case 1:
-        fastllm::RMSNorm(inputs, weights, 1e-5, outputs);
-        break;
-    default:
-        break;
-    }
+    inputs.ToDevice(fastllm::DataDevice::ASCEND);
+    weights.ToDevice(fastllm::DataDevice::ASCEND);
+
+    // 预期输出: 抽取 Token 2 和 4 的行，应为 [2.0, 2.0...], [4.0, 4.0...]
+    fastllm::Embedding(inputs, weights, outputs);
+
     outputs.ToDevice(fastllm::DataDevice::CPU);
     outputs.Print();
 }
-    
-// void callLinearOp() {
-//     std::cout << "=== Testing LinearOp on ASCEND (Auto Memory Management) ===" << std::endl;
 
-//     fastllm::Data inputs = fastllm::Data(fastllm::DataType::FLOAT32, {1, 2}, {1, 2}); 
+void callTopKOp() {
+    std::cout << "\n=== Testing TopKOp ===" << std::endl;
+    // 模拟 5 个 Token 的概率分布 (Logits)
+    std::vector<float> inputData = {0.1f, 0.9f, 0.3f, 0.8f, 0.2f};
+    fastllm::Data inputs(fastllm::DataType::FLOAT16, {1, 5}, inputData);
+    fastllm::Data outputs;
 
-//     fastllm::Data weights = fastllm::Data(fastllm::DataType::FLOAT32, {3, 2}, {3, 4, 5, 5, 6, 7});
+    inputs.ToDevice(fastllm::DataDevice::ASCEND);
 
-//     fastllm::Data bias = fastllm::Data(fastllm::DataType::FLOAT32, {1, 3}, {0, 1, 1});
+    // 取 Top-2
+    // 预期输出: 值 [0.9, 0.8], 索引 [1.0, 3.0] 拼接在一起
+    fastllm::TopK(inputs, outputs, 2);
 
+    outputs.ToDevice(fastllm::DataDevice::CPU);
+    outputs.Print();
+}
+
+// void callRepeatOp() {
+//     std::cout << "\n=== Testing RepeatOp ===" << std::endl;
+//     // 原始张量 [1, 2, 3]
+//     std::vector<float> inputData = {1.0f, 2.0f, 3.0f, 4.0f, 5.0f, 6.0f};
+//     fastllm::Data inputs(fastllm::DataType::FLOAT16, {1, 2, 3}, inputData);
 //     fastllm::Data outputs;
 
-//     // inputs.ToDevice(fastllm::DataDevice::ASCEND);
-//     // weights.ToDevice(fastllm::DataDevice::ASCEND);
-//     // bias.ToDevice(fastllm::DataDevice::ASCEND);
+//     inputs.ToDevice(fastllm::DataDevice::ASCEND);
 
-//     // outputs.ToDevice(fastllm::DataDevice::ASCEND);
-//     fastllm::Linear(inputs, weights, bias, outputs);
+//     // 在轴 1 上重复 2 次。预期形状: [1, 4, 3]
+//     // 预期数据: 行0, 行0, 行1, 行1 交替
+//     fastllm::Repeat(inputs, 1, 2, outputs);
 
-//     //outputs.ToDevice(fastllm::DataDevice::CPU);
-
+//     outputs.ToDevice(fastllm::DataDevice::CPU);
 //     outputs.Print();
-    
-//     std::cout << "=== Test Finished ===" << std::endl;
 // }
 
+// void callQuantLinearOp() {
+//     std::cout << "\n=== Testing QuantLinearDequantOp (W8A16) ===" << std::endl;
+    
+//     // 1. 输入 X: 霸气回归 FLOAT16
+//     int M = 1;
+//     int K = 32; 
+//     int N = 16; 
 
+//     // 2. 构造 FLOAT16 的输入 X
+//     std::vector<float> inputData(M * K, 1.0f); 
+//     fastllm::Data inputs(fastllm::DataType::FLOAT16, {M, K}, inputData); 
+    
+//     // 3. 构造 INT8 的权重 W (N=16, K=32)
+//     std::vector<float> weightData(N * K, 2.0f); 
+//     fastllm::Data weights(fastllm::DataType::INT8, {N, K}, weightData); 
+    
+//     // 4. 构造 FLOAT32 的 WeightScale
+//     std::vector<float> wScaleData(N, 0.5f);
+//     fastllm::Data weightScale(fastllm::DataType::FLOAT32, {N}, wScaleData);
+    
+//     // 4. 输入缩放 xScale: 【设为 FLOAT32】，pertoken 要求 shape 为 (m,) 也就是 (1,)
+//     std::vector<float> xScaleData = {1.0f};
+//     fastllm::Data inputScale(fastllm::DataType::FLOAT32, {1}, xScaleData);
+    
+//     fastllm::Data bias; // 传空
+//     fastllm::Data outputs;
 
-void callLinearOp() {
+//     inputs.ToDevice(fastllm::DataDevice::ASCEND);
+//     weights.ToDevice(fastllm::DataDevice::ASCEND);
+//     weightScale.ToDevice(fastllm::DataDevice::ASCEND);
+//     inputScale.ToDevice(fastllm::DataDevice::ASCEND);
 
-    fastllm::Data inputs = fastllm::Data(fastllm::DataType::FLOAT32, {1, 2}, {1, 2}); 
+//     // 5. 输出: FLOAT16
+//     outputs.dataType = fastllm::DataType::FLOAT16;
+//     outputs.Resize({1, 3});
+//     outputs.dataDevice = fastllm::DataDevice::ASCEND;
+//     outputs.Allocate(); 
 
-    fastllm::Data weights = fastllm::Data(fastllm::DataType::FLOAT32, {3, 2}, {3, 4, 5, 5, 6, 7});
+//     // 呼叫
+//     fastllm::QuantLinearDequant(inputs, weights, weightScale, inputScale, bias, outputs);
 
-    fastllm::Data bias = fastllm::Data(fastllm::DataType::FLOAT32, {1, 3}, {0, 1, 1});
-
-    fastllm::Data outputs;
-
-    fastllm::Linear(inputs, weights, bias, outputs);
-
-    float* outPtr = (float*)outputs.cpuData;
-    printf("First 5 results: %f, %f, %f, %f, %f\n", 
-           outPtr[0], outPtr[1], outPtr[2], outPtr[3], outPtr[4]);
-
-}
-
-void callActivationOp(int activateType=0){
-    fastllm::Data inputs = fastllm::Data(fastllm::DataType::FLOAT32, {1, 2}, {1, 5});
-    fastllm::Data outputs;
-    switch (activateType)
-    {
-    case 0:
-        fastllm::Silu(inputs, outputs);
-        break;
-    case 1:
-        fastllm::Softmax(inputs, outputs, -1);
-        break;
-    case 2:
-        fastllm::Swiglu(inputs, outputs);
-        break;
-    default:
-        break;
-    }
-    outputs.ToDevice(fastllm::DataDevice::CPU);
-    outputs.Print();
-}
-
-// void callAttentionOp(int group=1, int attentionType=0){
-//     const fastllm::Data q = fastllm::Data(fastllm::DataType::FLOAT32, {1, 2, 3}, {1, 2, 3, 4, 5, 6});
-//     const fastllm::Data k = fastllm::Data(fastllm::DataType::FLOAT32, {1, 2, 3}, {5, 6, 7, 8, 9, 10});
-//     const fastllm::Data v = fastllm::Data(fastllm::DataType::FLOAT32, {1, 2, 3}, {1, 1, 1, 2, 1, 3});
-//     const fastllm::Data mask = fastllm::Data();
-//     int dims = q.dims.back();
-//     float scale = 1/sqrt(dims);
-//     fastllm::Data output;
-
-//     fastllm::Attention(q, k, v, mask, output, group, scale, attentionType);
+//     outputs.ToDevice(fastllm::DataDevice::CPU);
+//     outputs.Print();
 // }
 
-void callAttentionOp(int group=1, int attentionType=0){
-    // 【升维打击】：升级为 4D 张量 [Batch=1, NumHeads=1, SeqLen=2, HeadDim=3]
-    // 这完美契合了底层 Attention 机制真实的内存排布
-    // fastllm::Data q(fastllm::DataType::FLOAT16, {1, 1, 2, 3}, std::vector<float>{1, 2, 3, 4, 5, 6});
-    // fastllm::Data k(fastllm::DataType::FLOAT16, {1, 1, 2, 3}, std::vector<float>{5, 6, 7, 8, 9, 10});
-    // fastllm::Data v(fastllm::DataType::FLOAT16, {1, 1, 2, 3}, std::vector<float>{1, 1, 1, 2, 1, 3});
-    fastllm::Data q(fastllm::DataType::FLOAT16, {1, 1, 2, 2}, 
-                    std::vector<float>{10.0f,  0.0f, 
-                                        0.0f, 10.0f});
-                                        
-    // K 矩阵: 和 Q 一模一样
-    fastllm::Data k(fastllm::DataType::FLOAT16, {1, 1, 2, 2}, 
-                    std::vector<float>{10.0f,  0.0f, 
-                                        0.0f, 10.0f});
-                                        
-    // V 矩阵: 极具辨识度的阶梯数据
-    fastllm::Data v(fastllm::DataType::FLOAT16, {1, 1, 2, 2}, 
-                    std::vector<float>{1.0f, 2.0f, 
-                                       3.0f, 4.0f});
-    fastllm::Data mask; 
+// void callQuantLinearOp() {
+//     std::cout << "\n=== Testing QuantLinearDequantOp (Bulletproof Memory) ===" << std::endl;
     
-    int dims = q.dims.back();
-    // 缩放因子: 1 / sqrt(d_k)
-    float scale = 1.0f / sqrt(dims);
-    fastllm::Data output;
+//     int M = 1;
+//     int K = 32; 
+//     int N = 16; 
 
-    // 呼叫算子执行: Attention(Q, K, V) = Softmax(Q*K^T / sqrt(d_k)) * V
-    fastllm::Attention(q, k, v, mask, output, group, scale, attentionType);
+//     // 1. 纯手工构造 FLOAT16 输入 X (绕过隐式转换)
+//     fastllm::Data inputs(fastllm::DataType::FLOAT16, {M, K});
+//     inputs.Allocate();
+//     uint16_t* in_ptr = (uint16_t*)inputs.cpuData;
+//     // 0x3c00 是 IEEE 754 标准下 FLOAT16 的 1.0f 的十六进制真值
+//     for (int i = 0; i < M * K; i++) in_ptr[i] = 0x3c00; 
+
+//     // 2. 纯手工构造 INT8 权重 W (直接操作单字节内存)
+//     fastllm::Data weights(fastllm::DataType::INT8, {N, K});
+//     weights.Allocate();
+//     int8_t* w_ptr = (int8_t*)weights.cpuData;
+//     // 写入真实的 INT8 整数 2
+//     for (int i = 0; i < N * K; i++) w_ptr[i] = 2; 
     
-    // 拉回主板并打印
-    output.ToDevice(fastllm::DataDevice::CPU);
-    output.Print();
-}
+//     // 3. 构造 FLOAT32 的 WeightScale
+//     std::vector<float> wScaleData(N, 0.5f);
+//     fastllm::Data weightScale(fastllm::DataType::FLOAT32, {N}, wScaleData);
+    
+//     // 4. 手动提供 xScale (规避动态量化可能返回 0 的硬件差异)
+//     std::vector<float> xScaleData(M, 1.0f);
+//     fastllm::Data inputScale(fastllm::DataType::FLOAT32, {M}, xScaleData);
+    
+//     fastllm::Data bias; 
+//     fastllm::Data outputs;
 
-void testBase(){
-    printf("testing BaseOp...\n");
-    for (int i=0;i<6;i++){
-        callBaseOp(i);
+//     // 推入 NPU
+//     inputs.ToDevice(fastllm::DataDevice::ASCEND);
+//     weights.ToDevice(fastllm::DataDevice::ASCEND);
+//     weightScale.ToDevice(fastllm::DataDevice::ASCEND);
+//     inputScale.ToDevice(fastllm::DataDevice::ASCEND);
+
+//     // 分配输出坑位
+//     outputs.dataType = fastllm::DataType::FLOAT16;
+//     outputs.Resize({M, N});
+//     outputs.dataDevice = fastllm::DataDevice::ASCEND;
+//     outputs.Allocate(); 
+
+//     // 呼叫底层
+//     fastllm::QuantLinearDequant(inputs, weights, weightScale, inputScale, bias, outputs);
+
+//     // 拉回主板并打印
+//     outputs.ToDevice(fastllm::DataDevice::CPU);
+//     outputs.Print();
+// }
+
+void callRoPEOp() {
+    std::cout << "\n=== Testing NearlyRotatePosition2DOp (RoPE Absolute Compliance) ===" << std::endl;
+    
+    // CANN 强制规定：最后一维必须是 128！
+    int B = 1;
+    int S = 2; // Seq_len
+    int N = 2; // Head_num
+    int D = 128; // Head_dim (雷打不动的 128)
+    
+    // Query 填充全 1
+    std::vector<float> qData(B * S * N * D, 1.0f); 
+    fastllm::Data query(fastllm::DataType::FLOAT16, {B, S, N, D}, qData); 
+    
+    // Cos/Sin 的形状必须是 [B, S, 1, D]
+    std::vector<float> cosData(B * S * 1 * D, 0.0f); // Cos 全 0
+    std::vector<float> sinData(B * S * 1 * D, 1.0f); // Sin 全 1
+    
+    fastllm::Data cos(fastllm::DataType::FLOAT16, {B, S, 1, D}, cosData);
+    fastllm::Data sin(fastllm::DataType::FLOAT16, {B, S, 1, D}, sinData);
+    
+    fastllm::Data positionIds; // 占位空张量
+    
+    query.ToDevice(fastllm::DataDevice::ASCEND);
+    cos.ToDevice(fastllm::DataDevice::ASCEND);
+    sin.ToDevice(fastllm::DataDevice::ASCEND);
+    
+    // 呼叫
+    fastllm::NearlyRotatePosition2D(query, positionIds, sin, cos, 128);
+    
+    query.ToDevice(fastllm::DataDevice::CPU);
+    
+    // 验证部分数据即可，不用全打出来
+    std::cout << "shape: ";
+    for (int i = 0; i < query.dims.size(); i++) std::cout << query.dims[i] << " ";
+    std::cout << "\nfirst 8 elements: \n";
+    uint16_t* out_ptr = (uint16_t*)query.cpuData;
+    // 打印前 8 个 FP16 的近似十进制值观察变化
+    for(int i=0; i<8; i++) {
+        std::cout << (out_ptr[i] == 0xbc00 ? "-1.0 " : (out_ptr[i] == 0x3c00 ? "1.0 " : "other ")) ;
     }
-    printf("test BaseOp finished!\n");
+    std::cout << std::endl;
 }
 
-void testActivation(){
-    printf("testing ActivationOp...\n");
-    for (int i=0;i<3;i++){
-        callActivationOp(i);
-    }
-    printf("test ActivationOp finished!\n");
+void callRoPEFusedOp() {
+    std::cout << "\n=== Testing NearlyRotatePosition2DFusedOp (RoPE Fused) ===" << std::endl;
+    
+    int B = 1, S = 2, N = 2, D = 128;
+    
+    // Query 全 1.0，Key 全 2.0
+    std::vector<float> qData(B * S * N * D, 1.0f); 
+    std::vector<float> kData(B * S * N * D, 2.0f); 
+    
+    fastllm::Data query(fastllm::DataType::FLOAT16, {B, S, N, D}, qData); 
+    fastllm::Data key(fastllm::DataType::FLOAT16, {B, S, N, D}, kData); 
+    
+    // Cos 全 0，Sin 全 1
+    std::vector<float> cosData(B * S * 1 * D, 0.0f); 
+    std::vector<float> sinData(B * S * 1 * D, 1.0f); 
+    
+    fastllm::Data cos(fastllm::DataType::FLOAT16, {B, S, 1, D}, cosData);
+    fastllm::Data sin(fastllm::DataType::FLOAT16, {B, S, 1, D}, sinData);
+    
+    fastllm::Data positionIds; 
+    
+    query.ToDevice(fastllm::DataDevice::ASCEND);
+    key.ToDevice(fastllm::DataDevice::ASCEND);
+    cos.ToDevice(fastllm::DataDevice::ASCEND);
+    sin.ToDevice(fastllm::DataDevice::ASCEND);
+    
+    // 直接呼叫我们刚写好的底层函数
+    fastllm::FastllmAclRotatePosition2D_Fused(query, key, positionIds, sin, cos, 128);
+    
+    query.ToDevice(fastllm::DataDevice::CPU);
+    key.ToDevice(fastllm::DataDevice::CPU);
+    
+    uint16_t* q_ptr = (uint16_t*)query.cpuData;
+    uint16_t* k_ptr = (uint16_t*)key.cpuData;
+    
+    // 验证逻辑：
+    // Query (1.0) 应该变成 -1.0 (FP16 十六进制为 0xbc00)
+    // Key (2.0) 应该变成 -2.0 (FP16 十六进制为 0xc000)
+    std::cout << "Query first 8 elements (expected -1.0): \n";
+    for(int i=0; i<8; i++) std::cout << (q_ptr[i] == 0xbc00 ? "-1.0 " : "other ") ;
+    
+    std::cout << "\nKey first 8 elements (expected -2.0): \n";
+    for(int i=0; i<8; i++) std::cout << (k_ptr[i] == 0xc000 ? "-2.0 " : "other ") ;
+    
+    std::cout << std::endl;
 }
 
-void testAttention(){
-    printf("testing AttentionOp...\n");
-    callAttentionOp();
-    printf("test AttentionOp finished!\n");
+void testAdvancedOps() {
+    //callEmbeddingOp();
+    //callTopKOp();
+    //callRepeatOp();
+    // 下面两个算子对硬件要求较高，如果报错可以先注释掉单独调试
+    callRoPEOp();
+    callRoPEFusedOp();
+    //callQuantLinearOp(); 
+    std::cout << "\n=== All Advanced Ops Tested! ===" << std::endl;
 }
-
-void testLinaer(){
-    printf("testing LinearOp...\n");
-    callLinearOp();
-    printf("test LinearOp finished!\n");
-}
-
-void testNorm(){
-    printf("testing NormOp...\n");
-    for (int i=0;i<2;i++){
-        callNormOp(i);
-    }
-    printf("test NormOp finished!\n");
-}
-
-void testAll(){
-    //testBase();
-    //testActivation();
-    testAttention();
-    // testNorm();
-    // testLinaer();
-}
-
 
 int main(){
     fastllm::FastllmAclInit();
-    testAll();
+    testAdvancedOps();
 }

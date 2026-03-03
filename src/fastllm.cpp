@@ -3030,6 +3030,14 @@ namespace fastllm {
         }, {{"alpha", alpha}}, {{"group", group}});
     }
 
+    void QuantLinearDequant(const Data &input, const Data &weight, const Data &weightScale, const Data &inputScale, const Data &bias, Data &output)
+    {
+        curExecutor->Run("QuantLinearDequant", {
+                {"input", (Data*)&input}, {"weight", (Data*)&weight}, {"weightScale", (Data*)&weightScale}, 
+                {"inputScale", (Data*)&inputScale}, {"bias", (Data*)&bias}, {"output", &output}
+        }, {}, {});
+    }
+
     void Softmax(const Data &input, Data &output, int axis) {
         curExecutor->Run("SoftMax", {
                 {"input", (Data*)&input}, {"output", &output}

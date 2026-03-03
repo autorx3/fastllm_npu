@@ -64,7 +64,8 @@
      // =======================================================================
  
      void FastllmAclPermute(const fastllm::Data &input, const std::vector<int> &axis);
-     void FastllmAclRepeat(void *src, void *dst, int outer, int repeatTimes, int inputStride, int outputStride, int channelsInner, int channelsInputInner);
+     //void FastllmAclRepeat(void *src, void *dst, int outer, int repeatTimes, int inputStride, int outputStride, int channelsInner, int channelsInputInner);
+     void FastllmAclRepeat(const fastllm::Data &input, fastllm::Data &output, int axis, int repeatTimes);
      void FastllmAclTopK(const fastllm::Data &input, fastllm::Data &output, int topk);
      void FastllmAclCat(const Data &input0, const Data &input1, Data &output, int axis);
      void FastllmAclSplit(const fastllm::Data &input, int axis, int start, int end, fastllm::Data &output);

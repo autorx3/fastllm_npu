@@ -666,6 +666,7 @@ namespace fastllm {
     void LayerNorm(Data &input, Data &gamma, Data &beta, int axis, Data &output);
 
     void Linear(Data &input, Data &weight, const Data &bias, Data &output);
+    
 
     enum LinearExType {
         ExTypeNone = 0,
@@ -704,6 +705,8 @@ namespace fastllm {
     void MatMul(const Data &input0, const Data &input1, Data &output, float alpha = 1.0, int group = 1);
 
     void MatMulTransB(const Data &input0, const Data &input1, Data &output, float alpha = 1.0, int group = 1);
+
+    void QuantLinearDequant(const Data &input, const Data &weight, const Data &weightScale, const Data &inputScale, const Data &bias, Data &output);
 
     void Softmax(const Data &input, Data &output, int axis);
 
