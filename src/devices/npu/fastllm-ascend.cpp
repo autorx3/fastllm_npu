@@ -38,8 +38,8 @@ namespace fastllm {
         size_t currentOffset = 0;     
         //std::mutex mtx; 
 
-        // 默认预分配大小：2GB
-        const size_t DEFAULT_POOL_SIZE = 2UL * 1024 * 1024 * 1024; 
+        // 默认预分配大小：8GB
+        const size_t DEFAULT_POOL_SIZE = 8UL * 1024 * 1024 * 1024; 
 
         NpuWorkspace() {}
 
@@ -242,10 +242,11 @@ namespace fastllm {
                                dims64.data(), dims64.size(), ptr);
     }
 
+    // create acl bool tensor
     static inline aclTensor* CreateBoolTensorFromDataND(void* devPtr, const std::vector<int>& dims) {
         std::vector<int64_t> dims64;
         dims64.reserve(dims.size());
-        for (int d : dims) dims64.push_back((int64_t)d);
+        for (int d : dims) dims64.push_back(d);
     
         std::vector<int64_t> strides(dims.size());
         int64_t stride = 1;
@@ -254,11 +255,11 @@ namespace fastllm {
             stride *= dims[i];
         }
     
-        return aclCreateTensor(dims64.data(), (int64_t)dims64.size(),
+        return aclCreateTensor(dims64.data(), dims64.size(),
                                ACL_BOOL,
                                strides.data(),
                                0, ACL_FORMAT_ND,
-                               dims64.data(), (int64_t)dims64.size(),
+                               dims64.data(), dims64.size(),
                                devPtr);
     }
 
@@ -272,6 +273,7 @@ namespace fastllm {
         aclTensor *tOutput = CreateAclTensor(output, output.dims, aclOutput);
 
         uint64_t workspaceSize = 0; aclOpExecutor *executor = nullptr;
+        //cubeMathType = 1 means ALLOW_FP32_DOWN_PRECISION --> FP32 -> FP16
         int8_t cubeMathType = 1; 
 
         if (aclnnMatmulGetWorkspaceSize(tInput, tWeight, tOutput, cubeMathType, &workspaceSize, &executor) == ACL_SUCCESS) {
@@ -285,49 +287,10 @@ namespace fastllm {
         FastllmAclFinishOutput(output, aclOutput);
     }
 
-    // void FastllmAclMatMulTransB(const Data &input, const Data &weight, const Data &bias, Data &output, int alpha, int beta) {
-    //     void *aclInput  = FastllmAclPrepareInput(input);
-    //     void *aclWeight = FastllmAclPrepareInput(weight);
-    //     void *aclOutput = FastllmAclPrepareOutput(output);
-        
-    //     aclTensor *tInput = CreateAclTensor(input, input.dims,aclInput);
-    //     aclTensor *tOutput = CreateAclTensor(output, output.dims,aclOutput);
-
-    //     int64_t N = weight.dims[0];
-    //     int64_t K = weight.dims[1];
-    //     std::vector<int64_t> viewDims = {K, N};
-    //     std::vector<int64_t> viewStrides = {1, K}; 
-        
-    //     aclDataType type = ACL_FLOAT;
-    //     if (weight.dataType == DataType::FLOAT16) type = ACL_FLOAT16;
-    //     else if (weight.dataType == DataType::FLOAT32) type = ACL_FLOAT;
-    //     else if (weight.dataType == DataType::BFLOAT16) type = ACL_BF16;
-    //     else if (weight.dataType == DataType::INT8) type = ACL_INT8;
-
-    //     aclTensor *tWeight = aclCreateTensor(viewDims.data(), viewDims.size(), type,
-    //                                          viewStrides.data(), 0, ACL_FORMAT_ND,
-    //                                          viewDims.data(), viewDims.size(), aclWeight);
-
-    //     uint64_t workspaceSize = 0; aclOpExecutor *executor = nullptr;
-    //     if (aclnnMatmulGetWorkspaceSize(tInput, tWeight, tOutput, 1, &workspaceSize, &executor) == ACL_SUCCESS) {
-    //         aclnnMatmul(g_workspace.Get(workspaceSize), workspaceSize, executor, GetFastllmAclStream());
-    //         printf("FastllmAclMatMulTransB executed with workspace size: %.6f MB\n", workspaceSize / (1024.0 * 1024.0));
-    //     }
-
-    //     aclDestroyTensor(tInput); 
-    //     aclDestroyTensor(tWeight);
-    //     aclDestroyTensor(tOutput);
-    //     FastllmAclFinishInput(input, aclInput);
-    //     FastllmAclFinishInput(weight, aclWeight);
-    //     FastllmAclFinishOutput(output, aclOutput);
-    // }
-
     void FastllmAclMatMulTransB(const Data &input, const Data &weight, const Data &bias, Data &output, int alpha, int beta) {
         void *aclInput  = FastllmAclPrepareInput(input);
         void *aclWeight = FastllmAclPrepareInput(weight);
         void *aclOutput = FastllmAclPrepareOutput(output);
-        
-        aclTensor *tInput = CreateAclTensor(input, input.dims, aclInput);
 
         int rank = weight.dims.size();
         int64_t N = weight.dims[rank - 2];
@@ -354,14 +317,18 @@ namespace fastllm {
         
         aclDataType type = ACL_FLOAT;
         if (weight.dataType == DataType::FLOAT16) type = ACL_FLOAT16;
+
+        aclTensor *tInput = CreateAclTensor(input, input.dims, aclInput);
         
         aclTensor *tWeight = aclCreateTensor(viewDims.data(), viewDims.size(), type,
                                              viewStrides.data(), 0, ACL_FORMAT_ND,
                                              viewDims.data(), viewDims.size(), aclWeight);
         aclTensor *tOutput = CreateAclTensor(output, output.dims, aclOutput);
 
+
+        int8_t cubeMathType = 1; 
         uint64_t ws = 0; aclOpExecutor *ex = nullptr;
-        aclError ret = aclnnMatmulGetWorkspaceSize(tInput, tWeight, tOutput, 1, &ws, &ex);
+        aclError ret = aclnnMatmulGetWorkspaceSize(tInput, tWeight, tOutput, cubeMathType, &ws, &ex);
         if (ret == ACL_SUCCESS) {
             void *wsAddr = ws > 0 ? g_workspace.Get(ws) : nullptr;
             aclnnMatmul(wsAddr, ws, ex, GetFastllmAclStream());
@@ -374,53 +341,6 @@ namespace fastllm {
         FastllmAclFinishInput(weight, aclWeight);
         FastllmAclFinishOutput(output, aclOutput);
     }
-
-    // void FastllmAclQuantLinearDequant(Data &input, Data &weight, Data &weightScale, 
-    //                                   Data &xScale, Data &bias, Data &output) {
-    //     void *aclInput       = FastllmAclPrepareInput(input);
-    //     void *aclWeight      = FastllmAclPrepareInput(weight);
-    //     void *aclWeightScale = FastllmAclPrepareInput(weightScale);
-    //     void *aclXScale      = xScale.dims.size() > 0 ? FastllmAclPrepareInput(xScale) : nullptr;
-    //     void *aclBias        = bias.dims.size() > 0 ? FastllmAclPrepareInput(bias) : nullptr;
-    //     void *aclOutput      = FastllmAclPrepareOutput(output);
-
-    //     int64_t K = input.dims.back();
-    //     int64_t M = input.Count(0) / K; 
-    //     int64_t N = weight.dims[0]; 
-
-    //     std::vector<int> dimInput = {(int)M, (int)K};
-    //     std::vector<int> dimWeight = {(int)N, (int)K}; 
-    //     std::vector<int> dimOutput = {(int)M, (int)N};
-    //     std::vector<int> dimWScale = {(int)N};
-    //     std::vector<int> dimXScale = {(int)M};
-
-    //     aclTensor *tInput = CreateAclTensor(input, dimInput, aclInput);
-    //     aclTensor *tWeight = CreateAclTensor(weight, dimWeight, aclWeight);
-    //     aclTensor *tWeightScale = CreateAclTensor(weightScale, dimWScale, aclWeightScale);
-    //     aclTensor *tOutput = CreateAclTensor(output, dimOutput, aclOutput);
-
-    //     aclTensor *tXScale = aclXScale ? CreateAclTensor(xScale, dimXScale, aclXScale) : nullptr;
-    //     aclTensor *tBias = aclBias ? CreateAclTensor(bias, {bias.dims[0]}, aclBias) : nullptr;
-
-    //     uint64_t workspaceSize = 0; aclOpExecutor *executor = nullptr;
-    //     char mode[] = "pertoken"; 
-    //     if (aclnnQuantMatmulDequantGetWorkspaceSize(tInput, tWeight, tWeightScale, tBias, tXScale, nullptr, nullptr,
-    //         mode, true, tOutput, &workspaceSize, &executor) == ACL_SUCCESS) {
-    //         aclnnQuantMatmulDequant(g_workspace.Get(workspaceSize), workspaceSize, executor, GetFastllmAclStream());
-    //     }
-
-    //     aclDestroyTensor(tInput); aclDestroyTensor(tWeight); aclDestroyTensor(tWeightScale);
-    //     aclDestroyTensor(tOutput); 
-    //     if(tXScale) aclDestroyTensor(tXScale); 
-    //     if(tBias) aclDestroyTensor(tBias);
-
-    //     FastllmAclFinishInput(input, aclInput);
-    //     FastllmAclFinishInput(weight, aclWeight);
-    //     FastllmAclFinishInput(weightScale, aclWeightScale);
-    //     if (aclXScale) FastllmAclFinishInput(xScale, aclXScale);
-    //     if (aclBias) FastllmAclFinishInput(bias, aclBias);
-    //     FastllmAclFinishOutput(output, aclOutput);
-    // }
 
     void FastllmAclQuantLinearDequant(Data &input, Data &weight, Data &weightScale, 
                                       Data &xScale, Data &bias, Data &output) {
@@ -447,6 +367,7 @@ namespace fastllm {
         aclTensor *tOutput = CreateAclTensor(output, dimOutput, aclOutput);
 
         aclTensor *tXScale = aclXScale ? CreateAclTensor(xScale, dimXScale, aclXScale) : nullptr;
+        // NO USE
         aclTensor *tBias = aclBias ? CreateAclTensor(bias, {bias.dims[0]}, aclBias) : nullptr;
 
         uint64_t workspaceSize = 0; 
@@ -474,7 +395,6 @@ namespace fastllm {
                 printf("[FATAL] aclnnQuantMatmulDequant Execution failed! Error Code: %d\n", execRet);
             }
         } else {
-            // 抓的就是你！看看底层到底为什么拒绝执行
             printf("[FATAL] aclnnQuantMatmulDequantGetWorkspaceSize failed! Error Code: %d\n", ret);
         }
 
@@ -492,6 +412,7 @@ namespace fastllm {
     }
 
     //性能优化版本
+    //需要先计算rstd
     void FastllmAclRMSNorm(const Data &input, const Data &weight, const Data &bias, Data &output, float eps) {
         void *aclInput  = FastllmAclPrepareInput(input);
         void *aclWeight = FastllmAclPrepareInput(weight);
@@ -517,7 +438,8 @@ namespace fastllm {
         std::vector<int64_t> rstdStrides(rstdDims.size());
         int64_t stride = 1;
         for (int i = rstdDims.size() - 1; i >= 0; i--) {
-            rstdStrides[i] = stride; stride *= rstdDims[i];
+            rstdStrides[i] = stride;
+            stride *= rstdDims[i];
         }
         aclTensor *tRstd = aclCreateTensor(rstdDims.data(), rstdDims.size(), ACL_FLOAT,
                                         rstdStrides.data(), 0, ACL_FORMAT_ND,
@@ -561,28 +483,7 @@ namespace fastllm {
         FastllmAclFinishOutput(output, aclOutput);
     }
 
-    // void FastllmAclSwiglu(const Data &input, Data &output) {
-    //     void *aclInput  = FastllmAclPrepareInput(input);
-    //     void *aclOutput = FastllmAclPrepareOutput(output);
-
-    //     aclTensor *tInput = CreateAclTensor(input, input.dims, aclInput);
-    //     aclTensor *tOutput = CreateAclTensor(output, output.dims, aclOutput);
-    //     int64_t dim = input.dims.size() - 1; 
-    //     uint64_t ws = 0; aclOpExecutor *ex = nullptr;
-    //     aclError ret = aclnnSwiGluGetWorkspaceSize(tInput, dim, tOutput, &ws, &ex);
-    //     if (ret == ACL_SUCCESS) {
-    //         void *wsAddr = ws > 0 ? g_workspace.Get(ws) : nullptr;
-    //         aclnnSwiGlu(wsAddr, ws, ex, GetFastllmAclStream());
-    //     } else {
-    //         printf("[FATAL] aclnnSwiGluGetWorkspaceSize failed! Error code: %d\n", ret);
-    //         printf("        Tip: Check if FLOAT32 is supported for SwiGLU on this NPU. Try FLOAT16.\n");
-    //     }
-    //     aclDestroyTensor(tInput); aclDestroyTensor(tOutput);
-
-    //     FastllmAclFinishInput(input, aclInput);
-    //     FastllmAclFinishOutput(output, aclOutput);
-    // }
-
+    //to analysis
     void FastllmAclSwiglu(const Data &input, Data &output) {
         void *aclInput  = FastllmAclPrepareInput(input);
         void *aclOutput = FastllmAclPrepareOutput(output);
@@ -598,13 +499,6 @@ namespace fastllm {
             void *wsAddr = ws > 0 ? g_workspace.Get(ws) : nullptr;
             aclnnSwiGlu(wsAddr, ws, ex, GetFastllmAclStream());
         } else {
-            // =================================================================
-            // 优雅降级引擎 (Unfused Fallback)
-            // 当硬件拒绝执行融合算子时，自动回退到基础算子拼装模式！
-            // 数学公式: SwiGLU(x) = Silu(x_left) * x_right
-            // =================================================================
-            // printf("[INFO] Fused SwiGLU rejected. Triggering Unfused Fallback...\n");
-            
             int64_t split_dim = input.dims.size() - 1;
             int64_t half_size = input.dims.back() / 2;
             
@@ -658,57 +552,66 @@ namespace fastllm {
     }
 
     //待测试
+    //to analysis
     void FastllmAclEmbedding(const Data &input, const Data &weight, Data &output) {
-
         void *aclInput  = FastllmAclPrepareInput(input);
         void *aclWeight = FastllmAclPrepareInput(weight);
         void *aclOutput = FastllmAclPrepareOutput(output);
 
         aclTensor *tW = CreateAclTensor(weight, weight.dims, aclWeight);
         aclTensor *tO = CreateAclTensor(output, output.dims, aclOutput);
-
-        int64_t elemCount = input.Count(0);
-        size_t intBytes = (elemCount * sizeof(int64_t) + 255) / 256 * 256; // 256对齐
-
-        size_t maxOpWs = 8 * 1024 * 1024; 
-
-        uint8_t *basePtr = (uint8_t*)g_workspace.Get(intBytes + maxOpWs);
-        
-        void *tempIntData = basePtr;
-        void *opWsAddr    = basePtr + intBytes;
-
         aclTensor *tI = nullptr;
 
         if (input.dataType == DataType::FLOAT32) {
             // === Cast Float -> Int64 ===
             aclTensor *tI_Float = CreateAclTensor(input, input.dims, aclInput);
 
-            std::vector<int64_t> dims; for(auto d : input.dims) dims.push_back(d);
+            std::vector<int64_t> dims; 
+            for(auto d : input.dims) dims.push_back(d);
             std::vector<int64_t> strides(dims.size(), 1);
-            for(int i=dims.size()-2; i>=0; i--) strides[i] = dims[i+1] * strides[i+1];
-            
+            for(int i = (int)dims.size() - 2; i >= 0; i--) strides[i] = dims[i+1] * strides[i+1];
+
+            int64_t elemCount = input.Count(0);
+            size_t intBytes = elemCount * sizeof(int64_t);
+            void *tempIntData = g_workspace.Get(intBytes); 
+
             aclTensor *tI_Int64 = aclCreateTensor(dims.data(), dims.size(), ACL_INT64, 
                                                 strides.data(), 0, ACL_FORMAT_ND, 
                                                 dims.data(), dims.size(), tempIntData);
 
-            uint64_t ws = 0; aclOpExecutor *ex = nullptr;
-            if (aclnnCastGetWorkspaceSize(tI_Float, ACL_INT64, tI_Int64, &ws, &ex) == ACL_SUCCESS) {
-                if (ws > maxOpWs) printf("Warning: Cast WS need %lu\n", ws);
-                aclnnCast(opWsAddr, ws, ex, GetFastllmAclStream());
+            uint64_t castWs = 0; aclOpExecutor *castEx = nullptr;
+            aclError ret = aclnnCastGetWorkspaceSize(tI_Float, ACL_INT64, tI_Int64, &castWs, &castEx);
+            if (ret == ACL_SUCCESS) {
+                void *castWsAddr = castWs > 0 ? g_workspace.Get(castWs) : nullptr;
+                aclError execRet = aclnnCast(castWsAddr, castWs, castEx, GetFastllmAclStream());
+                if (execRet != ACL_SUCCESS) {
+                    printf("[FATAL] aclnnCast Execution failed in Embedding! Error Code: %d\n", execRet);
+                }
+            } else {
+                printf("[FATAL] aclnnCastGetWorkspaceSize failed! Error Code: %d\n", ret);
             }
+            
             aclDestroyTensor(tI_Float);
             tI = tI_Int64;
         } else {
-            tI = CreateAclTensor(input, input.dims);
+            tI = CreateAclTensor(input, input.dims, aclInput); 
         }
 
-        uint64_t ws = 0; aclOpExecutor *ex = nullptr;
-        if (aclnnEmbeddingGetWorkspaceSize(tW, tI, tO, &ws, &ex) == ACL_SUCCESS) {
-            if (ws > maxOpWs) printf("Warning: Embedding WS need %lu\n", ws);
-            aclnnEmbedding(opWsAddr, ws, ex, GetFastllmAclStream());
+        uint64_t embWs = 0; aclOpExecutor *embEx = nullptr;
+        aclError ret = aclnnEmbeddingGetWorkspaceSize(tW, tI, tO, &embWs, &embEx);
+        if (ret == ACL_SUCCESS) {
+            void *embWsAddr = embWs > 0 ? g_workspace.Get(embWs) : nullptr;
+            aclError execRet = aclnnEmbedding(embWsAddr, embWs, embEx, GetFastllmAclStream());
+            if (execRet != ACL_SUCCESS) {
+                printf("[FATAL] aclnnEmbedding Execution failed! Error Code: %d\n", execRet);
+            }
+        } else {
+            printf("[FATAL] aclnnEmbeddingGetWorkspaceSize failed! Error Code: %d\n", ret);
         }
 
-        aclDestroyTensor(tW); aclDestroyTensor(tI); aclDestroyTensor(tO);
+        aclDestroyTensor(tW); 
+        if (tI) aclDestroyTensor(tI); 
+        aclDestroyTensor(tO);
 
         FastllmAclFinishInput(input, aclInput);
         FastllmAclFinishInput(weight, aclWeight);
@@ -820,22 +723,18 @@ namespace fastllm {
 
 
     void FastllmAclSplit(const fastllm::Data &input, int axis, int start, int end, fastllm::Data &output) {
-        // 1. 召唤护法：获取安全的物理智能指针
         void *aclInput  = FastllmAclPrepareInput(input);
         void *aclOutput = FastllmAclPrepareOutput(output);
 
-        // 2. 计算安全的切分参数
         int dimsLen = input.dims.size();
         int64_t dim = (axis % dimsLen + dimsLen) % dimsLen;
         int64_t start_idx = std::max(0, std::min((int)input.dims[dim], start));
         int64_t end_idx = std::max(0, std::min((int)input.dims[dim], end));
         int64_t step = 1; // 连续切片，步长为 1
 
-        // 3. 构建 CANN 底层张量描述符
         aclTensor *tInput = CreateAclTensor(input, input.dims, aclInput);
         aclTensor *tOutput = CreateAclTensor(output, output.dims, aclOutput);
 
-        // 4. 呼叫官方 CANN Slice 引擎，完美绕过手动内存对齐的坑！
         uint64_t workspaceSize = 0;
         aclOpExecutor *executor = nullptr;
         if (aclnnSliceGetWorkspaceSize(tInput, dim, start_idx, end_idx, step, tOutput, &workspaceSize, &executor) == ACL_SUCCESS) {
@@ -845,11 +744,9 @@ namespace fastllm {
             printf("[FATAL] FastllmAclSplit aclnnSliceGetWorkspaceSize failed!\n");
         }
 
-        // 5. 释放描述符
         aclDestroyTensor(tInput);
         aclDestroyTensor(tOutput);
 
-        // 6. 智能打扫战场，自动同步流并回传 CPU
         FastllmAclFinishInput(input, aclInput);
         FastllmAclFinishOutput(output, aclOutput);
     }
@@ -903,7 +800,6 @@ namespace fastllm {
 
         FastllmAclMatMulTransB(q, k, Data(), score, 1, 0);
 
-        // 3. Scale, Mask, Softmax 操作
         if (std::abs(scale - 1.0f) > 1e-6) FastllmAclMul(score, scale, score);
         if (mask.dims.size() > 0) FastllmAclAddTo(score, mask, -10000.0f);
         FastllmAclSoftmax(score, score, -1);
@@ -1059,55 +955,19 @@ namespace fastllm {
         FastllmAclFinishOutput(output, aclOut);
     }
 
-    // void FastllmAclRepeat(void *src, void *dst, int outer, int repeatTimes, int inputStride, int outputStride, int channelsInner, int channelsInputInner) {
-
-    //     std::vector<int64_t> selfShape = { (int64_t)outer, 1, (int64_t)channelsInputInner };
-    //     std::vector<int64_t> outShape  = { (int64_t)outer, (int64_t)repeatTimes, (int64_t)channelsInputInner };
-
-    //     std::vector<int64_t> selfStrides = { (int64_t)inputStride, (int64_t)channelsInputInner, 1 };
-
-    //     std::vector<int64_t> outStrides = { (int64_t)outputStride, (int64_t)channelsInner, 1 };
-
-    //     aclTensor *tSelf = aclCreateTensor(selfShape.data(), selfShape.size(), ACL_UINT8, 
-    //                                     selfStrides.data(), 0, ACL_FORMAT_ND, 
-    //                                     selfShape.data(), selfShape.size(), src);
-
-    //     aclTensor *tOut = aclCreateTensor(outShape.data(), outShape.size(), ACL_UINT8, 
-    //                                     outStrides.data(), 0, ACL_FORMAT_ND, 
-    //                                     outShape.data(), outShape.size(), dst);
-
-    //     aclIntArray *expandSize = aclCreateIntArray(outShape.data(), outShape.size());
-
-    //     uint64_t workspaceSize = 0;
-    //     aclOpExecutor *executor = nullptr;
-
-    //     if (aclnnExpandGetWorkspaceSize(tSelf, expandSize, tOut, &workspaceSize, &executor) == ACL_SUCCESS) {
-    //         void *workspaceAddr = (workspaceSize > 0) ? g_workspace.Get(workspaceSize) : nullptr;
-    //         aclnnExpand(workspaceAddr, workspaceSize, executor, GetFastllmAclStream());
-    //     }
-
-    //     aclDestroyTensor(tSelf);
-    //     aclDestroyTensor(tOut);
-    //     aclDestroyIntArray(expandSize);
-    // }
-
     void FastllmAclRepeat(const Data &input, Data &output, int axis, int repeatTimes) {
-        // 1. 基于真实的元素个数推导维度，绝不乘以 unitSize！
         int64_t outer = input.Count(0) / input.Count(axis);
         int64_t block = input.Count(axis); 
         
         std::vector<int64_t> selfShape = { outer, 1, block };
         std::vector<int64_t> outShape  = { outer, (int64_t)repeatTimes, block };
 
-        // 真实的内存跨度（Stride）
         std::vector<int64_t> selfStrides = { block, block, 1 }; 
         std::vector<int64_t> outStrides = { (int64_t)(repeatTimes * block), block, 1 };
 
-        // 2. 启用正规的生命周期管理 (取代之前的裸指针)
         void *aclInput = FastllmAclPrepareInput(input);
         void *aclOutput = FastllmAclPrepareOutput(output);
 
-        // 3. 还原张量高贵的真实数据类型
         aclDataType type = ACL_FLOAT;
         if (input.dataType == DataType::FLOAT16) type = ACL_FLOAT16;
         else if (input.dataType == DataType::FLOAT32) type = ACL_FLOAT;
@@ -1126,7 +986,6 @@ namespace fastllm {
         uint64_t workspaceSize = 0;
         aclOpExecutor *executor = nullptr;
 
-        // 4. 呼叫原生 Expand 算子，并加上铁血报错拦截
         aclError ret = aclnnExpandGetWorkspaceSize(tSelf, expandSize, tOut, &workspaceSize, &executor);
         if (ret == ACL_SUCCESS) {
             void *wsAddr = workspaceSize > 0 ? g_workspace.Get(workspaceSize) : nullptr;
@@ -1142,7 +1001,6 @@ namespace fastllm {
         aclDestroyTensor(tOut);
         aclDestroyIntArray(expandSize);
 
-        // 5. 完美同步，安全打扫战场
         FastllmAclFinishInput(input, aclInput);
         FastllmAclFinishOutput(output, aclOutput);
     }
@@ -1188,7 +1046,7 @@ namespace fastllm {
         aclDestroyTensor(tSelf); aclDestroyTensor(tOther); aclDestroyScalar(sAlpha);
 
         FastllmAclFinishInput(input1, aclInput1);
-        // 使用 FinishOutput 将修改后的结果同步回 CPU (如果原始户口在 CPU 的话)
+        // 使用 FinishOutput 将修改后的结果同步回 CPU 
         FastllmAclFinishOutput(const_cast<Data&>(input0), aclInput0); 
     }
 
@@ -1290,93 +1148,18 @@ namespace fastllm {
         FastllmAclFinishOutput(mutableInput, aclInput);
     }
 
-    // void FastllmAclNearlyRotatePosition2D(const Data &data, const Data &positionIds, const Data &sinData, const Data &cosData, int rotaryDim) {
-        
-    //     void *aclData = FastllmAclPrepareInput(data);
-    //     void *aclCos  = FastllmAclPrepareInput(cosData);
-    //     void *aclSin  = FastllmAclPrepareInput(sinData);
-        
-    //     aclTensor *tQuery = CreateAclTensor(data, data.dims, aclData);
-    //     aclTensor *tCos = CreateAclTensor(cosData, cosData.dims, aclCos);
-    //     aclTensor *tSin = CreateAclTensor(sinData, sinData.dims, aclSin);
-
-    //     aclTensor *tKey = nullptr; 
-
-    //     int64_t layout = 1; 
-    //     char *rotaryCoeff = (char*)"half"; 
-
-    //     uint64_t workspaceSize = 0;
-    //     aclOpExecutor *executor = nullptr;
-
-    //     aclnnApplyRotaryPosEmbV2GetWorkspaceSize(tQuery, tKey, tCos, tSin, layout, rotaryCoeff, &workspaceSize, &executor);
-
-    //     void *workspaceAddr = nullptr;
-    //     if (workspaceSize > 0) {
-    //         workspaceAddr = g_workspace.Get(workspaceSize);
-    //     }
-
-    //     aclnnApplyRotaryPosEmbV2(workspaceAddr, workspaceSize, executor, GetFastllmAclStream());
-
-    //     aclDestroyTensor(tQuery);
-    //     aclDestroyTensor(tCos);
-    //     aclDestroyTensor(tSin);
-
-    //     FastllmAclFinishInput(cosData, aclCos);
-    //     FastllmAclFinishInput(sinData, aclSin);
-    //     FastllmAclFinishOutput(const_cast<Data&>(data), aclData);
-    // }
-
-    // void FastllmAclRotatePosition2D_Fused(const Data &query, const Data &key, const Data &positionIds, const Data &sinData, const Data &cosData, int rotaryDim) {
-    //     void *aclQuery = FastllmAclPrepareInput(query);
-    //     void *aclKey   = FastllmAclPrepareInput(key);
-    //     void *aclCos   = FastllmAclPrepareInput(cosData);
-    //     void *aclSin   = FastllmAclPrepareInput(sinData);
-
-    //     aclTensor *tQuery = CreateAclTensor(query, query.dims, aclQuery);
-    //     aclTensor *tKey   = CreateAclTensor(key, key.dims, aclKey); 
-    //     aclTensor *tCos   = CreateAclTensor(cosData, cosData.dims, aclCos);
-    //     aclTensor *tSin   = CreateAclTensor(sinData, sinData.dims, aclSin);
-
-    //     int64_t layout = 1; 
-    //     char *rotaryCoeff = (char*)"half"; 
-
-    //     uint64_t workspaceSize = 0;
-    //     aclOpExecutor *executor = nullptr;
-
-    //     aclnnApplyRotaryPosEmbV2GetWorkspaceSize(tQuery, tKey, tCos, tSin, layout, rotaryCoeff, &workspaceSize, &executor);
-
-    //     void *workspaceAddr = nullptr;
-    //     if (workspaceSize > 0) {
-    //         workspaceAddr = g_workspace.Get(workspaceSize);
-    //     }
-
-    //     aclnnApplyRotaryPosEmbV2(workspaceAddr, workspaceSize, executor, GetFastllmAclStream());
-
-    //     aclDestroyTensor(tQuery);
-    //     aclDestroyTensor(tKey);
-    //     aclDestroyTensor(tCos);
-    //     aclDestroyTensor(tSin);
-
-    //     FastllmAclFinishInput(cosData, aclCos);
-    //     FastllmAclFinishInput(sinData, aclSin);
-    //     // 使用 FinishOutput 将修改好的 Query/Key 安全回收
-    //     FastllmAclFinishOutput(const_cast<Data&>(query), aclQuery);
-    //     FastllmAclFinishOutput(const_cast<Data&>(key), aclKey);
-    // }
-
     void FastllmAclNearlyRotatePosition2D(const Data &data, const Data &positionIds, const Data &sinData, const Data &cosData, int rotaryDim) {
         void *aclData = FastllmAclPrepareInput(data);
         void *aclCos  = FastllmAclPrepareInput(cosData);
         void *aclSin  = FastllmAclPrepareInput(sinData);
         
         // ==========================================
-        // 【核心整形 1】：将 Query 强行补齐为 4D [q_b, q_s, q_n, q_d]
+        // 将 Query 强行补齐为 4D [q_b, q_s, q_n, q_d]
         // ==========================================
         std::vector<int> qDims = data.dims;
         while (qDims.size() < 4) qDims.insert(qDims.begin(), 1);
         
         // ==========================================
-        // 【核心整形 2】：严格遵守 CANN 红线！
         // Cos 和 Sin 的第三维必须是 1，第四维必须是 128 (q_d)
         // ==========================================
         std::vector<int> cosDims = {qDims[0], qDims[1], 1, qDims[3]};
@@ -1387,7 +1170,7 @@ namespace fastllm {
         aclTensor *tSin = CreateAclTensor(sinData, sinDims, aclSin);
 
         // ==========================================
-        // 【核心整形 3】：伪造 Dummy Key，完全复刻 Query 的维度
+        // 伪造 Dummy Key，完全复刻 Query 的维度
         // ==========================================
         fastllm::Data dummyKey(data.dataType, qDims);
         dummyKey.dataDevice = data.dataDevice; 
@@ -1395,7 +1178,7 @@ namespace fastllm {
         void *aclDummyKey = FastllmAclPrepareInput(dummyKey);
         aclTensor *tKey = CreateAclTensor(dummyKey, qDims, aclDummyKey);
 
-        // 文档铁律：layout 只支持 1
+        // layout 只支持 1
         int64_t layout = 1; 
         char rotaryCoeff[] = "half"; 
 
@@ -1413,7 +1196,7 @@ namespace fastllm {
             printf("[FATAL] aclnnApplyRotaryPosEmbV2GetWorkspaceSize failed! Error Code: %d\n", ret);
         }
 
-        // 硬件同步！
+        // 硬件同步
         // aclError syncRet = aclrtSynchronizeStream(GetFastllmAclStream());
         // if (syncRet != ACL_SUCCESS) printf("[FATAL] Stream Sync failed in RoPE! Error Code: %d\n", syncRet);
 
@@ -1435,7 +1218,7 @@ namespace fastllm {
         void *aclSin   = FastllmAclPrepareInput(sinData);
 
         // ==========================================
-        // 【核心整形】：将 Query 和 Key 强行补齐为 4D
+        // 将 Query 和 Key 强行补齐为 4D
         // ==========================================
         std::vector<int> qDims = query.dims;
         while (qDims.size() < 4) qDims.insert(qDims.begin(), 1);
@@ -1452,14 +1235,13 @@ namespace fastllm {
         aclTensor *tCos   = CreateAclTensor(cosData, cosDims, aclCos);
         aclTensor *tSin   = CreateAclTensor(sinData, sinDims, aclSin);
 
-        // 文档铁律：layout 只支持 1
+        // layout 只支持 1
         int64_t layout = 1; 
         char rotaryCoeff[] = "half"; 
 
         uint64_t workspaceSize = 0;
         aclOpExecutor *executor = nullptr;
 
-        // 呼叫融合算子，它会同时把 tQuery 和 tKey 给转了
         aclError ret = aclnnApplyRotaryPosEmbV2GetWorkspaceSize(tQuery, tKey, tCos, tSin, layout, rotaryCoeff, &workspaceSize, &executor);
         if (ret == ACL_SUCCESS) {
             void *wsAddr = workspaceSize > 0 ? g_workspace.Get(workspaceSize) : nullptr;

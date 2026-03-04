@@ -253,12 +253,12 @@ void callRoPEFusedOp() {
 }
 
 void testAdvancedOps() {
-    //callEmbeddingOp();
+    callEmbeddingOp();
     //callTopKOp();
     //callRepeatOp();
     // 下面两个算子对硬件要求较高，如果报错可以先注释掉单独调试
-    callRoPEOp();
-    callRoPEFusedOp();
+    //callRoPEOp();
+    //callRoPEFusedOp();
     //callQuantLinearOp(); 
     std::cout << "\n=== All Advanced Ops Tested! ===" << std::endl;
 }
